@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { useMeta } from '../data/api.ts';
 import { formatDateTime } from '../lib/format.ts';
 import BrandMark from './BrandMark.tsx';
+import SearchBox from './SearchBox.tsx';
 
 const navClass = ({ isActive }: { isActive: boolean }) => (isActive ? 'is-active' : undefined);
 
@@ -10,6 +11,8 @@ export default function Layout() {
   const { pathname } = useLocation();
   // «Тир-лист» подсвечен и на страницах рейдов, боссов и спеков
   const tierActive = pathname === '/' || pathname.startsWith('/raid') || pathname.startsWith('/spec');
+  const charsActive = pathname.startsWith('/character');
+  const itemsActive = pathname.startsWith('/item');
 
   return (
     <div className="shell">
@@ -23,26 +26,31 @@ export default function Layout() {
             <Link to="/" className={tierActive ? 'is-active' : undefined} aria-current={tierActive ? 'page' : undefined}>
               Тир-лист
             </Link>
+            <Link to="/characters" className={charsActive ? 'is-active' : undefined} aria-current={charsActive ? 'page' : undefined}>
+              Персонажи
+            </Link>
+            <Link to="/items" className={itemsActive ? 'is-active' : undefined} aria-current={itemsActive ? 'page' : undefined}>
+              Предметы
+            </Link>
             <NavLink to="/forever" className={navClass}>
-              WoW Forever
+              Forever
             </NavLink>
             <NavLink to="/about" className={navClass}>
               О данных
             </NavLink>
           </nav>
-          {meta && (
-            <p className="topbar__meta">
-              {meta.gameVersion} · обновлено {formatDateTime(meta.generatedAt)}
-            </p>
-          )}
+          <SearchBox />
         </div>
       </header>
 
       {meta?.demo && (
         <div className="notice" role="status">
           <div className="container notice__inner">
-            <strong>Демо-данные.</strong> Ключ Warcraft Logs ещё не подключён, поэтому цифры на сайте ненастоящие. После первого
-            запуска сборщика с ключом здесь появятся реальные логи.
+            <span className="notice__dot" aria-hidden="true" />
+            <span>
+              <strong>Демо-режим.</strong> Рейтинги и персонажи — пример, пока не подключён ключ Warcraft Logs. Предметы настоящие:
+              из базы Wowhead.
+            </span>
           </div>
         </div>
       )}
@@ -60,13 +68,20 @@ export default function Layout() {
 
       <footer className="footer">
         <div className="container footer__inner">
+          <p>Forever Meta — фан-проект, не связан с Blizzard Entertainment. World of Warcraft — товарный знак Blizzard Entertainment.</p>
           <p>
-            Forever Meta — фан-проект, не связан с Blizzard Entertainment. World of Warcraft — товарный знак Blizzard Entertainment.
-          </p>
-          <p>
-            Данные о боях:{' '}
+            {meta ? `${meta.gameVersion} · обновлено ${formatDateTime(meta.generatedAt)} · ` : ''}
+            Данные:{' '}
             <a href={meta?.site ?? 'https://www.warcraftlogs.com'} target="_blank" rel="noreferrer">
               Warcraft Logs
+            </a>
+            ,{' '}
+            <a href="https://www.wowhead.com/tbc/ru" target="_blank" rel="noreferrer">
+              Wowhead
+            </a>
+            ,{' '}
+            <a href="https://github.com/Hoizame/AtlasLootClassic" target="_blank" rel="noreferrer">
+              AtlasLoot
             </a>{' '}
             ·{' '}
             <a href="https://github.com/medivhkr/forever-meta" target="_blank" rel="noreferrer">

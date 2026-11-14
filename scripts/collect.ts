@@ -6,7 +6,7 @@
 // Ключ API живёт только в секретах GitHub Actions и в окружении сборки.
 // В браузер он не попадает: сайт читает уже готовые JSON-файлы.
 
-import { mkdir, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 
 const SITE = (process.env.WCL_SITE ?? 'https://fresh.warcraftlogs.com').replace(/\/$/, '');
 const GAME_VERSION = process.env.GAME_VERSION ?? 'TBC Anniversary';
@@ -38,6 +38,7 @@ interface PlayerParse {
   date: number | null;
   report: string | null;
   fight: number | null;
+  charId?: string; // только у демо-персонажей: ссылка на characters.json
 }
 
 interface SpecStats {
@@ -100,6 +101,7 @@ async function writeJson(name: string, data: unknown) {
   await writeFile(new URL(name, OUT_DIR), JSON.stringify(data));
 }
 
+// Удаляет только файлы рейтингов: база предметов и персонажи лежат рядом и не трогаются
 async function clearZoneFiles() {
   await mkdir(OUT_DIR, { recursive: true });
   for (const file of await readdir(OUT_DIR)) {
@@ -403,45 +405,109 @@ const DEMO_POWER: Record<string, number> = {
   'paladin/protection': 1.0, 'warrior/protection': 0.95, 'druid/guardian': 0.92,
 };
 
+interface DemoCharacter {
+  id: string;
+  name: string;
+  realm: string;
+  region: string;
+  guild: string;
+  cls: string;
+  spec: string;
+  skill: number;
+  parses?: { z: number; e: number; a: number; r: number; n: number }[];
+}
+
+const CHARACTERS = new URL('characters.json', OUT_DIR);
+const TANKS = new Set(['warrior/protection', 'paladin/protection', 'druid/guardian']);
+const roleOf = (key: string) => (HEALERS.has(key) ? 'heal' : TANKS.has(key) ? 'tank' : 'dps');
+
 async function writeDemo() {
   const random = rng(20261114);
   const specs = Object.entries(FALLBACK_SPECS).flatMap(([cls, list]) => list.map((spec) => `${cls}/${spec}`.toLowerCase()));
+
+  // Демо-персонажи из characters.json становятся игроками в рейтингах боссов
+  let charactersFile: { characters: DemoCharacter[] } | null = null;
+  try {
+    charactersFile = JSON.parse(await readFile(CHARACTERS, 'utf8')) as { characters: DemoCharacter[] };
+  } catch {
+    console.warn('characters.json не найден: в рейтингах будут безымянные игроки.');
+  }
+  const bySpec = new Map<string, DemoCharacter[]>();
+  for (const c of charactersFile?.characters ?? []) {
+    const key = `${c.cls}/${c.spec}`;
+    bySpec.set(key, [...(bySpec.get(key) ?? []), c]);
+  }
+  const parses = new Map<string, NonNullable<DemoCharacter['parses']>>();
+  const today = Date.UTC(2026, 10, 14);
+
   await clearZoneFiles();
   for (const zone of DEMO_ZONES) {
     const encounters: EncounterData[] = zone.encounters.map((enc) => {
       const bossFactor = 0.85 + random() * 0.4;
       const list: SpecStats[] = [];
+      const everyone: { charId: string; role: string; amount: number }[] = [];
       for (const key of specs) {
         const power = DEMO_POWER[key];
         if (!power) continue;
         const [cls, spec] = key.split('/');
         const metric: Metric = HEALERS.has(key) ? 'hps' : 'dps';
-        const base = metric === 'hps' ? 1450 : key.endsWith('protection') || key.endsWith('guardian') ? 950 : 1750;
+        const base = metric === 'hps' ? 1450 : TANKS.has(key) ? 950 : 1750;
         const med = base * power * bossFactor * (0.95 + random() * 0.1);
+        const squad = bySpec.get(key) ?? [];
+        const players: PlayerParse[] = squad.length
+          ? squad.map((c) => ({
+              name: c.name,
+              server: c.realm,
+              region: c.region,
+              guild: c.guild,
+              amount: round1(med * (1.12 + (c.skill - 0.9) * 1.4) * (0.97 + random() * 0.06)),
+              duration: Math.round((150 + random() * 240) * 1000),
+              date: today - Math.floor(random() * 21) * 86_400_000,
+              report: null,
+              fight: null,
+              charId: c.id,
+            }))
+          : Array.from({ length: TOP_PLAYERS }, (_, i) => ({
+              name: `Пример ${i + 1}`,
+              server: 'Демо',
+              region: 'EU',
+              guild: 'Демо-гильдия',
+              amount: round1(med * (1.3 - i * 0.04)),
+              duration: Math.round((150 + random() * 240) * 1000),
+              date: null,
+              report: null,
+              fight: null,
+            }));
+        players.sort((a, b) => b.amount - a.amount);
+        for (const p of players) if (p.charId) everyone.push({ charId: p.charId, role: roleOf(key), amount: p.amount });
         list.push({
           cls,
           spec,
           metric,
           count: 100,
-          max: round1(med * (1.3 + random() * 0.12)),
+          max: round1(Math.max(players[0]?.amount ?? 0, med * 1.28)),
           top10: round1(med * (1.15 + random() * 0.06)),
           median: round1(med),
-          players: Array.from({ length: TOP_PLAYERS }, (_, i) => ({
-            name: `Пример ${i + 1}`,
-            server: 'Демо',
-            region: 'EU',
-            guild: 'Демо-гильдия',
-            amount: round1(med * (1.3 - i * 0.04)),
-            duration: Math.round((150 + random() * 240) * 1000),
-            date: null,
-            report: null,
-            fight: null,
-          })),
+          players,
+        });
+      }
+      // Место персонажа среди всех игроков той же роли на этом боссе
+      for (const role of ['dps', 'heal', 'tank']) {
+        const group = everyone.filter((p) => p.role === role).sort((a, b) => b.amount - a.amount);
+        group.forEach((p, i) => {
+          const own = parses.get(p.charId) ?? [];
+          own.push({ z: zone.id, e: enc.id, a: p.amount, r: i + 1, n: group.length });
+          parses.set(p.charId, own);
         });
       }
       return { id: enc.id, name: enc.name, specs: list };
     });
     await writeJson(`zone-${zone.id}.json`, { id: zone.id, name: zone.name, encounters });
+  }
+
+  if (charactersFile) {
+    for (const c of charactersFile.characters) c.parses = parses.get(c.id) ?? [];
+    await writeFile(CHARACTERS, JSON.stringify(charactersFile));
   }
   await writeJson('meta.json', {
     generatedAt: new Date().toISOString(),

@@ -2,13 +2,13 @@ import type { PlayerRow } from '../data/tiers.ts';
 import { specInfo } from '../data/specs.ts';
 import { formatDate, formatDuration, formatNumber } from '../lib/format.ts';
 import { characterUrl, cssVars, reportUrl } from '../lib/helpers.ts';
+import CharacterName from './CharacterName.tsx';
 import SpecIcon from './SpecIcon.tsx';
 
 interface Props {
   players: PlayerRow[];
   site: string;
   unit: string;
-  showBoss?: (row: PlayerRow) => string;
 }
 
 // Место окрашено в цвет качества предмета: 1 — легендарный, 2–3 — эпический, до 10 — редкий.
@@ -45,7 +45,7 @@ export default function PlayersTable({ players, site, unit }: Props) {
         <tbody>
           {players.map((p, i) => {
             const info = specInfo(p.cls, p.spec, p.metric);
-            const linkable = Boolean(p.report && p.server && p.region);
+            const wclLink = Boolean(p.report && p.server && p.region);
             return (
               <tr key={`${p.name}-${p.server}-${info.key}-${i}`}>
                 <td className={`r ${rankClass(i + 1)}`}>{i + 1}</td>
@@ -53,7 +53,9 @@ export default function PlayersTable({ players, site, unit }: Props) {
                   <span className="player" style={cssVars({ '--c': info.color })}>
                     <SpecIcon cls={p.cls} spec={p.spec} size={28} />
                     <span className="player__text">
-                      {linkable ? (
+                      {p.charId ? (
+                        <CharacterName id={p.charId} name={p.name} cls={p.cls} spec={p.spec} />
+                      ) : wclLink ? (
                         <a className="player__name" href={characterUrl(site, p.region, p.server, p.name)} target="_blank" rel="noreferrer">
                           {p.name}
                         </a>

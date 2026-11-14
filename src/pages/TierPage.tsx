@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
-import { useMeta, useZone } from '../data/api.ts';
+import { useCharacters, useItems, useMeta, useZone } from '../data/api.ts';
 import { ROLES, ROLE_LABEL, STATS, STAT_LABEL, zoneTitle } from '../data/specs.ts';
 import { scoreZone } from '../data/tiers.ts';
 import { link, usePageTitle, useViewParams } from '../lib/helpers.ts';
@@ -14,6 +14,8 @@ export default function TierPage() {
   const { zoneId } = useParams();
   const { role, stat, update } = useViewParams();
   const meta = useMeta();
+  const characters = useCharacters();
+  const items = useItems();
   const zones = meta.data?.zones ?? [];
   // Без id в адресе показываем самый свежий рейд: сборщик кладёт его первым
   const zone = zoneId ? zones.find((z) => String(z.id) === zoneId) : zones[0];
@@ -83,6 +85,16 @@ export default function TierPage() {
         <p className="page-sub">
           {title.ru}: какие спеки {what}. Для каждого босса берём {meta.data.topN} лучших парсов каждого спека в Warcraft Logs.
         </p>
+        <div className="hub">
+          <Link to="/characters">
+            <span className="hub__num">{characters.data?.list.length ?? '…'}</span>
+            персонажей с экипировкой
+          </Link>
+          <Link to="/items">
+            <span className="hub__num">{items.data?.db.items.length ?? '…'}</span>
+            предметов из базы Wowhead
+          </Link>
+        </div>
       </header>
 
       <ZoneTabs zones={zones} activeId={zone.id} hrefFor={(id) => link(`/raid/${id}`, { role, stat })} />
