@@ -202,7 +202,8 @@ function parseLoot(lua: string, key: string): { boss: string; ids: number[] }[] 
     const item = line.match(/^\{\s*\d+\s*,\s*(\d+)\s*[,}]/);
     if (item && current) current.ids.push(Number(item[1]));
   }
-  return bosses.filter((b) => b.ids.length);
+  // Легендарное оружие Кель'таса работает только внутри боя с ним — это не добыча
+  return bosses.filter((b) => b.ids.length && !/^Legendaries$/i.test(b.boss));
 }
 
 function parseItem(id: number, en: Tooltip, ru: Tooltip, zone: number, boss: string): Item | null {
