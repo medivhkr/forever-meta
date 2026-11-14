@@ -121,18 +121,28 @@ async function request(url: string, init: RequestInit, attempt = 1): Promise<Res
 }
 
 async function getToken(clientId: string, clientSecret: string): Promise<string> {
-  const res = await request(`${SITE}/oauth/token`, {
+  const init: RequestInit = {
     method: 'POST',
     headers: {
       Authorization: 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64'),
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: 'grant_type=client_credentials',
-  });
-  if (!res.ok) throw new Error(`OAuth: HTTP ${res.status} ${(await res.text()).slice(0, 200)}`);
-  const json = (await res.json()) as { access_token?: string };
-  if (!json.access_token) throw new Error('OAuth: в ответе нет access_token');
-  return json.access_token;
+  };
+  // Аккаунты у сайтов Warcraft Logs общие: если поддомен не выдаст токен, пробуем основной сайт.
+  const urls = [...new Set([`${SITE}/oauth/token`, 'https://www.warcraftlogs.com/oauth/token'])];
+  let lastError = '';
+  for (const url of urls) {
+    const res = await request(url, init);
+    if (res.ok) {
+      const json = (await res.json()) as { access_token?: string };
+      if (json.access_token) return json.access_token;
+      lastError = 'в ответе нет access_token';
+    } else {
+      lastError = `HTTP ${res.status} ${(await res.text()).slice(0, 200)}`;
+    }
+  }
+  throw new Error(`OAuth: ${lastError}`);
 }
 
 async function gql<T>(token: string, query: string): Promise<T> {
@@ -224,55 +234,65 @@ function toPlayer(r: WclRanking): PlayerParse {
   };
 }
 
+const SPECS_PER_QUERY = 10;
+
 async function collectEncounter(
   token: string,
   enc: { id: number; name: string },
   specs: SpecDef[],
 ): Promise<{ data: EncounterData; rate: RateLimit }> {
-  // Один запрос на босса: все спеки сразу через алиасы s0, s1, …
-  const fields = specs
-    .map(
-      (s, i) =>
-        `s${i}: characterRankings(className: ${JSON.stringify(s.cls)}, specName: ${JSON.stringify(s.spec)}, metric: ${s.metric})`,
-    )
-    .join('\n      ');
-  const query = `query {
+  const result: SpecStats[] = [];
+  let rate: RateLimit = { limitPerHour: 0, pointsSpentThisHour: 0, pointsResetIn: 0 };
+
+  // Несколько спеков в одном запросе через алиасы s0, s1, …; порциями, чтобы запрос не был слишком тяжёлым.
+  for (let start = 0; start < specs.length; start += SPECS_PER_QUERY) {
+    const part = specs.slice(start, start + SPECS_PER_QUERY);
+    const fields = part
+      .map(
+        (s, i) =>
+          `s${i}: characterRankings(className: ${JSON.stringify(s.cls)}, specName: ${JSON.stringify(s.spec)}, metric: ${s.metric})`,
+      )
+      .join('\n      ');
+    const query = `query {
     rateLimitData { limitPerHour pointsSpentThisHour pointsResetIn }
     worldData { encounter(id: ${enc.id}) {
       ${fields}
     } }
   }`;
-  const data = await gql<{ rateLimitData: RateLimit; worldData: { encounter: Record<string, unknown> | null } }>(
-    token,
-    query,
-  );
-  const result: SpecStats[] = [];
-  const encounter = data.worldData.encounter ?? {};
-  specs.forEach((s, i) => {
-    const raw = encounter[`s${i}`] as { rankings?: WclRanking[] } | null | undefined;
-    const list = Array.isArray(raw?.rankings) ? raw.rankings : [];
-    const amounts = list
-      .map((r) => Number(r.amount))
-      .filter((n) => Number.isFinite(n) && n > 0)
-      .sort((a, b) => b - a)
-      .slice(0, TOP_N);
-    if (!amounts.length) return;
-    const players = [...list]
-      .sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0))
-      .slice(0, TOP_PLAYERS)
-      .map(toPlayer);
-    result.push({
-      cls: s.cls.toLowerCase(),
-      spec: s.spec.toLowerCase(),
-      metric: s.metric,
-      count: amounts.length,
-      max: round1(amounts[0]),
-      top10: round1(mean(amounts.slice(0, 10))),
-      median: round1(median(amounts)),
-      players,
+    const data = await gql<{ rateLimitData: RateLimit; worldData: { encounter: Record<string, unknown> | null } }>(
+      token,
+      query,
+    );
+    rate = data.rateLimitData;
+    const encounter = data.worldData.encounter ?? {};
+
+    part.forEach((s, i) => {
+      const raw = encounter[`s${i}`] as { rankings?: WclRanking[] } | null | undefined;
+      const list = Array.isArray(raw?.rankings) ? raw.rankings : [];
+      const amounts = list
+        .map((r) => Number(r.amount))
+        .filter((n) => Number.isFinite(n) && n > 0)
+        .sort((a, b) => b - a)
+        .slice(0, TOP_N);
+      if (!amounts.length) return;
+      const players = [...list]
+        .sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0))
+        .slice(0, TOP_PLAYERS)
+        .map(toPlayer);
+      result.push({
+        cls: s.cls.toLowerCase(),
+        spec: s.spec.toLowerCase(),
+        metric: s.metric,
+        count: amounts.length,
+        max: round1(amounts[0]),
+        top10: round1(mean(amounts.slice(0, 10))),
+        median: round1(median(amounts)),
+        players,
+      });
     });
-  });
-  return { data: { id: enc.id, name: enc.name, specs: result }, rate: data.rateLimitData };
+  }
+
+  return { data: { id: enc.id, name: enc.name, specs: result }, rate };
 }
 
 async function collectReal(clientId: string, clientSecret: string) {

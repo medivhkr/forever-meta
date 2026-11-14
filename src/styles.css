@@ -547,6 +547,12 @@ h3 {
   z-index: 2;
   text-align: left;
 }
+/* Колонка спеков сжимается по содержимому, остальная ширина достаётся боссам */
+.heat__corner,
+.heat__spec {
+  width: 1%;
+  white-space: nowrap;
+}
 .heat__total {
   text-align: right;
 }
