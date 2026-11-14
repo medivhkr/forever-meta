@@ -35,7 +35,7 @@ export default function CharacterCard({ id }: { id: string }) {
   return (
     <div className="ccard" style={cssVars({ '--c': info.color })}>
       <div className="ccard__head">
-        <SpecIcon cls={c.cls} spec={c.spec} size={44} />
+        <SpecIcon cls={c.cls} spec={c.spec} size={44} eager />
         <div className="ccard__who">
           <p className="ccard__name">{c.name}</p>
           <p className="ccard__sub">
@@ -56,7 +56,7 @@ export default function CharacterCard({ id }: { id: string }) {
           <ul key={i}>
             {column.map(({ slot, item }) => (
               <li key={slot} data-q={item?.q}>
-                {item ? <ItemIcon item={item} size={20} /> : <span className="ccard__empty" />}
+                {item ? <ItemIcon item={item} size={20} eager /> : <span className="ccard__empty" />}
                 <span className="ccard__item">{item ? item.name : '—'}</span>
                 {item && <span className="ccard__lvl">{item.ilvl}</span>}
               </li>

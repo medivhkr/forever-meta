@@ -5,9 +5,10 @@ interface Props {
   cls: string;
   spec: string;
   size?: number;
+  eager?: boolean;
 }
 
-export default function SpecIcon({ cls, spec, size = 36 }: Props) {
+export default function SpecIcon({ cls, spec, size = 36, eager = false }: Props) {
   const info = specInfo(cls, spec);
-  return <GameIcon icon={info.icon} size={size} color={info.color} letter={info.name.charAt(0)} className="spec-icon" />;
+  return <GameIcon icon={info.icon} size={size} color={info.color} letter={info.name.charAt(0)} className="spec-icon" eager={eager} />;
 }

@@ -9,6 +9,8 @@ interface Props {
   letter?: string;
   className?: string;
   quality?: number;
+  // Во всплывающих подсказках ленивая загрузка не срабатывает вовремя, там грузим сразу
+  eager?: boolean;
 }
 
 // Иконка из игровых файлов: сначала CDN Blizzard, потом зеркало Wowhead, потом буква.
@@ -17,7 +19,7 @@ export default function GameIcon(props: Props) {
   return <IconImage key={props.icon} {...props} />;
 }
 
-function IconImage({ icon, size, color = '#8a8a8a', letter = '?', className = '', quality }: Props) {
+function IconImage({ icon, size, color = '#8a8a8a', letter = '?', className = '', quality, eager = false }: Props) {
   const urls = iconUrls(icon);
   const [attempt, setAttempt] = useState(0);
 
@@ -42,7 +44,7 @@ function IconImage({ icon, size, color = '#8a8a8a', letter = '?', className = ''
       width={size}
       height={size}
       alt=""
-      loading="lazy"
+      loading={eager ? 'eager' : 'lazy'}
       decoding="async"
       referrerPolicy="no-referrer"
       onError={() => setAttempt((a) => a + 1)}

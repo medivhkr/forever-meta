@@ -27,7 +27,7 @@ export default function ItemTooltip({ id, item: given, large = false }: Props) {
   return (
     <div className={large ? 'wtt wtt--large' : 'wtt'} data-q={item.q}>
       <div className="wtt__top">
-        <ItemIcon item={item} size={large ? 56 : 40} />
+        <ItemIcon item={item} size={large ? 56 : 40} eager />
         <div className="wtt__title">
           <p className="wtt__name">{item.name}</p>
           {item.phase && <p className="wtt__phase">{item.phase}-я фаза</p>}
