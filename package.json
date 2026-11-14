@@ -1,0 +1,32 @@
+{
+  "name": "forever-meta",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Тир-лист спеков World of Warcraft по реальным логам Warcraft Logs",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build && node scripts/spa-fallback.ts",
+    "preview": "vite preview",
+    "collect": "node scripts/collect.ts",
+    "demo-data": "node scripts/collect.ts --demo",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.80.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router": "^7.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.9.2",
+    "vite": "^7.1.0"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}
