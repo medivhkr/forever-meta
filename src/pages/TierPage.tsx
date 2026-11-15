@@ -1,12 +1,11 @@
 import { useMemo, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
-import { useMeta, usePrefetchZone, useZone } from '../data/api.ts';
+import { useCharacters, useItems, useMeta, usePrefetchZone, useZone } from '../data/api.ts';
 import { ROLE_ICON } from '../data/art.ts';
-import { ROLES, ROLE_LABEL, STATS, STAT_LABEL, specInfo, zoneTitle } from '../data/specs.ts';
-import { MIN_PARSES, scoreZone } from '../data/tiers.ts';
-import { formatDateTime, formatNumber } from '../lib/format.ts';
+import { ROLES, ROLE_LABEL, STATS, STAT_LABEL, zoneTitle } from '../data/specs.ts';
+import { scoreZone } from '../data/tiers.ts';
+import { formatDateTime } from '../lib/format.ts';
 import { link, usePageTitle, useViewParams } from '../lib/helpers.ts';
-import Explain from '../components/Explain.tsx';
 import GameIcon from '../components/GameIcon.tsx';
 import PageHero from '../components/PageHero.tsx';
 import Segmented from '../components/Segmented.tsx';
@@ -15,12 +14,12 @@ import TierBoard from '../components/TierBoard.tsx';
 import Heatmap from '../components/Heatmap.tsx';
 import { EmptyState, ErrorState, Loading } from '../components/States.tsx';
 
-const ROLE_TITLE = { dps: 'урона', heal: 'лечения', tank: 'танков' } as const;
-
 export default function TierPage() {
   const { zoneId } = useParams();
   const { role, stat, update } = useViewParams();
   const meta = useMeta();
+  const characters = useCharacters();
+  const items = useItems();
   const zones = meta.data?.zones ?? [];
   // Без id в адресе показываем самый свежий рейд: сборщик кладёт его первым
   const zone = zoneId ? zones.find((z) => String(z.id) === zoneId) : zones[0];
@@ -31,18 +30,8 @@ export default function TierPage() {
   // Пересчитываем тиры, только когда поменялись данные, роль или метрика
   const scores = useMemo(() => (zoneData ? scoreZone(zoneData, role, stat) : []), [zoneData, role, stat]);
 
-  // Сколько парсов этой роли легло в основу тир-листа
-  const records = useMemo(() => {
-    if (!zoneData) return 0;
-    let total = 0;
-    for (const enc of zoneData.encounters) {
-      for (const s of enc.specs) if (specInfo(s.cls, s.spec, s.metric).role === role) total += s.count;
-    }
-    return total;
-  }, [zoneData, role]);
-
   const title = zone ? zoneTitle(zone.name) : undefined;
-  usePageTitle(title ? `Тир-лист ${ROLE_TITLE[role]}: ${title.ru}` : 'Тир-лист');
+  usePageTitle(title ? `Тир-лист: ${title.ru}` : 'Тир-лист');
 
   if (meta.isPending) return <Loading />;
   if (meta.isError) return <ErrorState error={meta.error} onRetry={() => void meta.refetch()} />;
@@ -77,26 +66,20 @@ export default function TierPage() {
       <div className="stack">
         <section className="panel" aria-labelledby="tier-title">
           <div className="panel__head">
-            <div>
-              <h2 id="tier-title" className="panel__title">
-                Тир-лист {ROLE_TITLE[role]}
-              </h2>
-              <p className="panel__sub">
-                Данные по: <span className="num">{formatNumber(records)} парсов</span>
-              </p>
-              <p className="panel__hint">Нажми на спек, чтобы открыть его разбор по боссам</p>
-            </div>
+            <h2 id="tier-title" className="panel__title">
+              Тир-лист
+            </h2>
           </div>
           <TierBoard scores={scores} specHref={specHref} />
         </section>
 
-        <section className="panel" aria-labelledby="rank-title">
+        <section className="panel" aria-labelledby="by-boss">
           <div className="panel__head">
             <div>
-              <h2 id="rank-title" className="panel__title">
-                Рейтинг по боссам
+              <h2 id="by-boss" className="panel__title">
+                По боссам
               </h2>
-              <p className="panel__hint">Процент от лучшего спека на каждом боссе. Нажми на босса, чтобы открыть его рейтинг.</p>
+              <p className="panel__hint">Процент от лучшего спека на каждом боссе. Нажми на имя босса, чтобы открыть его рейтинг.</p>
             </div>
           </div>
           <Heatmap zone={zoneData} scores={scores} bossHref={(id) => link(`/raid/${zone.id}/boss/${id}`, { role, stat })} specHref={specHref} />
@@ -105,12 +88,14 @@ export default function TierPage() {
     );
   }
 
+  const what = role === 'heal' ? 'лечат больше всех' : role === 'tank' ? 'наносят больше урона среди танков' : 'наносят больше всего урона';
+
   return (
     <>
       <PageHero
         icon={<GameIcon icon={ROLE_ICON[role]} size={64} letter="T" eager />}
         art={ROLE_ICON[role]}
-        title={`Тир-лист ${ROLE_TITLE[role]}: ${title.ru}`}
+        title="Тир-лист спеков"
         chips={[title.ru, meta.data.gameVersion]}
         meta={
           <>
@@ -119,37 +104,31 @@ export default function TierPage() {
         }
       >
         <p>
-          Какие спеки сильнее всего в {meta.data.gameVersion}: по {meta.data.topN} лучшим логам каждого спека на каждом боссе из
-          публичного <b>API Warcraft Logs</b>.
+          {title.ru}: какие спеки {what}. Для каждого босса берём {meta.data.topN} лучших парсов каждого спека в Warcraft Logs.
+        </p>
+        <p className="hub">
+          <Link to="/characters">
+            <span className="num">{characters.data?.list.length ?? '…'}</span> персонажей с экипировкой
+          </Link>
+          <Link to="/items">
+            <span className="num">{items.data?.db.items.length ?? '…'}</span> предметов из базы Wowhead
+          </Link>
         </p>
       </PageHero>
 
-      <Explain>
-        <ol>
-          <li>На каждом боссе берём выбранную метрику спека, по умолчанию медиану {meta.data.topN} лучших парсов.</li>
-          <li>Делим её на значение лучшего спека этой роли на том же боссе и получаем долю от 0 до 100%.</li>
-          <li>Усредняем доли по всем боссам рейда. Тир: S от 97%, A от 92%, B от 85%, C от 75%, D ниже.</li>
-          <li>
-            Спек с меньше чем {MIN_PARSES} парсами на боссе там не учитывается. Если он есть меньше чем на половине боссов, он попадает в
-            ряд X.
-          </li>
-        </ol>
-      </Explain>
-
-      <Segmented
-        variant="tabs"
-        label="Роль"
-        value={role}
-        options={ROLES.map((r) => ({
-          value: r,
-          label: ROLE_LABEL[r],
-          icon: <GameIcon icon={ROLE_ICON[r]} size={18} letter={ROLE_LABEL[r].charAt(0)} eager />,
-        }))}
-        onChange={(r) => update({ role: r })}
-      />
+      <ZoneTabs zones={zones} activeId={zone.id} hrefFor={(id) => link(`/raid/${id}`, { role, stat })} onIntent={prefetchZone} />
 
       <div className="controls">
-        <ZoneTabs zones={zones} activeId={zone.id} hrefFor={(id) => link(`/raid/${id}`, { role, stat })} onIntent={prefetchZone} />
+        <Segmented
+          label="Роль"
+          value={role}
+          options={ROLES.map((r) => ({
+            value: r,
+            label: ROLE_LABEL[r],
+            icon: <GameIcon icon={ROLE_ICON[r]} size={16} letter={ROLE_LABEL[r].charAt(0)} eager />,
+          }))}
+          onChange={(r) => update({ role: r })}
+        />
         <Segmented
           label="Метрика"
           value={stat}

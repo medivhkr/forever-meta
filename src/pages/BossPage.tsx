@@ -75,7 +75,7 @@ export default function BossPage() {
   let head: { title: string; hint: string };
   if (tab === 'specs') {
     head = { title: `Спеки на боссе, ${unit}`, hint: `${STAT_LABEL[stat].long} каждого спека. Полоса — доля от лучшего спека.` };
-    panel = rows.length ? <SpecBars rows={rows} unit={unit} specHref={specHref} /> : <EmptyState title="По этой роли данных нет" />;
+    panel = rows.length ? <SpecBars rows={rows} specHref={specHref} /> : <EmptyState title="По этой роли данных нет" />;
   } else if (tab === 'players') {
     head = { title: 'Лучшие игроки', hint: `Лучшие ${unit} среди всех спеков роли «${ROLE_LABEL[role].toLowerCase()}». Наведи на имя, чтобы увидеть экипировку.` };
     panel = players.length ? (

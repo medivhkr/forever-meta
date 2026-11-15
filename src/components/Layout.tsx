@@ -5,7 +5,6 @@ import { formatDateTime } from '../lib/format.ts';
 import { useOnline } from '../lib/useOnline.ts';
 import { preload, preloadWhenIdle, type PageName } from '../lib/pages.ts';
 import BrandMark from './BrandMark.tsx';
-import GameIcon from './GameIcon.tsx';
 import InstallButton from './InstallButton.tsx';
 import SearchPanel from './SearchPanel.tsx';
 import { SearchIcon } from './Icons.tsx';
@@ -15,6 +14,7 @@ const NAV: { to: string; label: string; page?: PageName; match: (path: string) =
   { to: '/characters', label: 'Персонажи', page: 'characters', match: (p) => p.startsWith('/character') },
   { to: '/items', label: 'Предметы', page: 'items', match: (p) => p.startsWith('/item') },
   { to: '/planner', label: 'Конструктор', page: 'planner', match: (p) => p.startsWith('/planner') },
+  { to: '/forever', label: 'Forever', page: 'forever', match: (p) => p.startsWith('/forever') },
   { to: '/about', label: 'О проекте', page: 'about', match: (p) => p.startsWith('/about') },
 ];
 
@@ -30,7 +30,6 @@ export default function Layout() {
   const [searchAt, setSearchAt] = useState<string | null>(null);
   const menuOpen = menuAt === pathname;
   const searchOpen = searchAt === pathname;
-  const forever = pathname.startsWith('/forever');
 
   // Когда браузер освободится, заранее скачиваем код остальных страниц
   useEffect(() => {
@@ -52,25 +51,11 @@ export default function Layout() {
   return (
     <div className="shell">
       <header className="site-head">
-        <div className="topbar">
+        <div className="navbar">
           <Link to="/" className="brand" aria-label="Forever Meta, на главную" viewTransition>
             <BrandMark className="brand__mark" />
             <span className="brand__name">Forever Meta</span>
           </Link>
-          <nav className="versions" aria-label="Версия игры">
-            <Link to="/" className="version" aria-current={forever ? undefined : 'page'} viewTransition>
-              <GameIcon icon="spell_arcane_portalshattrath" size={16} letter="T" eager />
-              TBC Anniversary
-            </Link>
-            <Link to="/forever" className="version" aria-current={forever ? 'page' : undefined} viewTransition onMouseEnter={intent('forever')}>
-              <GameIcon icon="inv_misc_head_dragon_black" size={16} letter="F" eager />
-              WoW Forever
-              <span className="version__soon">рейды 9 дек</span>
-            </Link>
-          </nav>
-        </div>
-
-        <div className="navbar">
           <nav className="navbar__links" aria-label="Разделы">
             {NAV.map((item) => (
               <Link
@@ -124,7 +109,7 @@ export default function Layout() {
 
         {menuOpen && (
           <nav id="site-menu" className="menu" aria-label="Разделы">
-            {[...NAV, { to: '/forever', label: 'WoW Forever', match: (p: string) => p.startsWith('/forever') }].map((item) => (
+            {NAV.map((item) => (
               <Link key={item.to} to={item.to} viewTransition aria-current={item.match(pathname) ? 'page' : undefined} onClick={() => setMenuAt(null)}>
                 {item.label}
               </Link>
@@ -153,8 +138,8 @@ export default function Layout() {
         )}
         {meta?.demo && (
           <p className="notice" role="status">
-            <strong>Демо-данные.</strong> Рейтинги и персонажи — пример, пока не подключён ключ Warcraft Logs. Предметы настоящие, из базы
-            Wowhead. <Link to="/about">Подробнее</Link>
+            <strong>Демо-режим.</strong> Рейтинги и персонажи — пример, пока не подключён ключ Warcraft Logs. Предметы настоящие: из базы
+            Wowhead.
           </p>
         )}
         {meta?.partial && (
@@ -166,27 +151,27 @@ export default function Layout() {
       </main>
 
       <footer className="footer">
-        <div className="footer__row">
-          <span className="footer__brand">
-            <BrandMark className="footer__mark" />© 2026 Forever Meta
-          </span>
-          <a href="https://github.com/medivhkr/forever-meta" target="_blank" rel="noreferrer">
-            GitHub
-          </a>
+        <p className="footer__note">
+          Forever Meta — фан-проект, не связан с Blizzard Entertainment. World of Warcraft — товарный знак Blizzard Entertainment.
+        </p>
+        <p className="footer__note">
+          {meta ? `${meta.gameVersion} · обновлено ${formatDateTime(meta.generatedAt)} · ` : ''}
+          Данные:{' '}
           <a href={meta?.site ?? 'https://www.warcraftlogs.com'} target="_blank" rel="noreferrer">
             Warcraft Logs
           </a>
+          ,{' '}
           <a href="https://www.wowhead.com/tbc/ru" target="_blank" rel="noreferrer">
             Wowhead
           </a>
+          ,{' '}
           <a href="https://github.com/Hoizame/AtlasLootClassic" target="_blank" rel="noreferrer">
             AtlasLoot
+          </a>{' '}
+          ·{' '}
+          <a href="https://github.com/medivhkr/forever-meta" target="_blank" rel="noreferrer">
+            исходный код
           </a>
-          <Link to="/about">О проекте</Link>
-        </div>
-        <p className="footer__note">
-          Фан-проект, не связан с Blizzard Entertainment. World of Warcraft — товарный знак Blizzard Entertainment.
-          {meta ? ` Данные: ${meta.gameVersion}, обновлено ${formatDateTime(meta.generatedAt)}.` : ''}
         </p>
       </footer>
 
