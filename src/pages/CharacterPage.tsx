@@ -70,7 +70,7 @@ export default function CharacterPage() {
       </nav>
 
       <header className="char-hero" style={cssVars({ '--c': info.color })}>
-        <SpecIcon cls={c.cls} spec={c.spec} size={72} />
+        <SpecIcon cls={c.cls} spec={c.spec} size={72} vt={`char-${c.id}`} />
         <div className="char-hero__text">
           <h1 className="char-hero__name">{c.name}</h1>
           <p className="char-hero__line">

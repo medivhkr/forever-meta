@@ -29,6 +29,7 @@ export default function TierBoard({ scores, specHref }: Props) {
                     <li key={info.key}>
                       <Link
                         to={specHref(s)}
+                        viewTransition
                         className={s.sparse ? 'chip is-sparse' : 'chip'}
                         style={cssVars({ '--c': info.color })}
                         title={
@@ -37,7 +38,7 @@ export default function TierBoard({ scores, specHref }: Props) {
                             : `В среднем ${formatPercent(s.score)} от лучшего спека на каждом боссе`
                         }
                       >
-                        <SpecIcon cls={s.cls} spec={s.spec} size={36} />
+                        <SpecIcon cls={s.cls} spec={s.spec} size={36} vt={`spec-${s.cls}-${s.spec}`} />
                         <span className="chip__text">
                           <span className="chip__name">{info.name}</span>
                           <span className="chip__sub">{info.clsName}</span>

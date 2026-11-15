@@ -51,6 +51,22 @@ export const SLOT_LABEL: Record<ItemSlot, string> = {
   relic: 'Реликвия',
 };
 
+// Тип брони, который класс носит на 70-м уровне
+export const CLASS_ARMOR: Record<string, string> = {
+  warrior: 'Plate',
+  paladin: 'Plate',
+  hunter: 'Mail',
+  shaman: 'Mail',
+  rogue: 'Leather',
+  druid: 'Leather',
+  priest: 'Cloth',
+  mage: 'Cloth',
+  warlock: 'Cloth',
+};
+
+// Слоты, где важен тип брони
+export const ARMOR_SLOTS = new Set<GearSlot>(['head', 'shoulder', 'chest', 'wrist', 'hands', 'waist', 'legs', 'feet']);
+
 export const ARMOR_TYPES: { value: string; label: string }[] = [
   { value: 'Cloth', label: 'Ткань' },
   { value: 'Leather', label: 'Кожа' },

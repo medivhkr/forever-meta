@@ -5,6 +5,7 @@ import { ROLE_LABEL, STATS, STAT_LABEL, specInfo, zoneTitle } from '../data/spec
 import { TIERS, rankEncounter, scoreZone } from '../data/tiers.ts';
 import { formatNumber, formatPercent } from '../lib/format.ts';
 import { cssVars, link, usePageTitle, useViewParams } from '../lib/helpers.ts';
+import RadarChart from '../components/RadarChart.tsx';
 import Segmented from '../components/Segmented.tsx';
 import SpecIcon from '../components/SpecIcon.tsx';
 import ZoneTabs from '../components/ZoneTabs.tsx';
@@ -12,7 +13,7 @@ import { EmptyState, ErrorState, Loading } from '../components/States.tsx';
 
 export default function SpecPage() {
   const { cls = '', spec = '' } = useParams();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const { stat, update } = useViewParams();
   const meta = useMeta();
   const zones = meta.data?.zones ?? [];
@@ -33,6 +34,24 @@ export default function SpecPage() {
     });
   }, [zoneData, info.role, stat, cls, spec]);
 
+  // С кем сравнивать на радаре: из адреса (?vs=mage/fire) или лучший другой спек этой роли
+  const others = scores.filter((s) => !(s.cls === cls && s.spec === spec));
+  const vsKey = params.get('vs');
+  const rival = others.find((s) => `${s.cls}/${s.spec}` === vsKey) ?? others[0];
+
+  const radar = useMemo(() => {
+    if (!zoneData || zoneData.encounters.length < 3) return null;
+    const relOf = (c: string, s: string) =>
+      zoneData.encounters.map((enc) => rankEncounter(enc, info.role, stat).find((r) => r.stats.cls === c && r.stats.spec === s)?.rel ?? null);
+    const series = [{ label: `${info.name}, ${info.clsName.toLowerCase()}`, color: info.color, values: relOf(cls, spec) }];
+    if (rival) {
+      const ri = specInfo(rival.cls, rival.spec, rival.metric);
+      // Если у соперника тот же цвет класса (маг против мага), берём нейтральный
+      series.push({ label: `${ri.name}, ${ri.clsName.toLowerCase()}`, color: ri.color === info.color ? '#9aa6b8' : ri.color, values: relOf(rival.cls, rival.spec) });
+    }
+    return { axes: zoneData.encounters.map((enc) => enc.name), series };
+  }, [zoneData, info, stat, cls, spec, rival]);
+
   usePageTitle(`${info.name}, ${info.clsName.toLowerCase()}`);
 
   if (meta.isPending) return <Loading />;
@@ -48,13 +67,15 @@ export default function SpecPage() {
   return (
     <>
       <nav className="crumbs" aria-label="Путь">
-        <Link to={link(`/raid/${zone.id}`, { role: info.role, stat })}>Тир-лист: {title.ru}</Link>
+        <Link to={link(`/raid/${zone.id}`, { role: info.role, stat })} viewTransition>
+          Тир-лист: {title.ru}
+        </Link>
         <span aria-hidden="true">/</span>
         <span>{info.name}</span>
       </nav>
 
       <header className="spec-hero" style={cssVars({ '--c': info.color })}>
-        <SpecIcon cls={cls} spec={spec} size={64} />
+        <SpecIcon cls={cls} spec={spec} size={64} vt={`spec-${cls}-${spec}`} />
         <div className="spec-hero__text">
           <p className="eyebrow">
             {info.clsName} · {ROLE_LABEL[info.role].toLowerCase()}
@@ -85,6 +106,44 @@ export default function SpecPage() {
           onChange={(s) => update({ stat: s })}
         />
       </div>
+
+      {radar && (
+        <section className="block radar-block" aria-labelledby="radar-title">
+          <div className="block__head">
+            <h2 id="radar-title">Профиль по боссам</h2>
+            {others.length > 0 && rival && (
+              <label className="field field--inline">
+                <span className="field__label">Сравнить с</span>
+                <select
+                  id="spec-compare"
+                  className="input input--select"
+                  value={`${rival.cls}/${rival.spec}`}
+                  onChange={(e) =>
+                    setParams(
+                      (prev) => {
+                        const next = new URLSearchParams(prev);
+                        next.set('vs', e.target.value);
+                        return next;
+                      },
+                      { replace: true },
+                    )
+                  }
+                >
+                  {others.map((s) => {
+                    const si = specInfo(s.cls, s.spec, s.metric);
+                    return (
+                      <option key={`${s.cls}/${s.spec}`} value={`${s.cls}/${s.spec}`}>
+                        {si.name}, {si.clsName.toLowerCase()} — {formatPercent(s.score)}
+                      </option>
+                    );
+                  })}
+                </select>
+              </label>
+            )}
+          </div>
+          <RadarChart axes={radar.axes} series={radar.series} title={`Доля от лучшего спека на каждом боссе рейда «${title.ru}»`} />
+        </section>
+      )}
 
       {zoneQuery.isPending ? (
         <Loading />

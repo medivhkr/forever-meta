@@ -71,8 +71,15 @@ export function HoverProvider({ children }: { children: ReactNode }) {
   );
 }
 
+interface TriggerHandlers {
+  onMouseEnter?: (e: MouseEvent<HTMLElement>) => void;
+  onMouseLeave?: () => void;
+  onFocus?: (e: FocusEvent<HTMLElement>) => void;
+  onBlur?: () => void;
+}
+
 // Обработчики для элемента, при наведении на который нужна подсказка
-export function useHoverTrigger(target: HoverTarget | null) {
+export function useHoverTrigger(target: HoverTarget | null): TriggerHandlers {
   const api = useContext(HoverContext);
   if (!api || !target) return {};
   return {

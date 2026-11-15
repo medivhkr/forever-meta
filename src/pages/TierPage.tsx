@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
-import { useCharacters, useItems, useMeta, useZone } from '../data/api.ts';
+import { useCharacters, useItems, useMeta, usePrefetchZone, useZone } from '../data/api.ts';
 import { ROLES, ROLE_LABEL, STATS, STAT_LABEL, zoneTitle } from '../data/specs.ts';
 import { scoreZone } from '../data/tiers.ts';
 import { link, usePageTitle, useViewParams } from '../lib/helpers.ts';
@@ -21,6 +21,7 @@ export default function TierPage() {
   const zone = zoneId ? zones.find((z) => String(z.id) === zoneId) : zones[0];
   const zoneQuery = useZone(zone?.id, meta.data?.generatedAt);
   const zoneData = zoneQuery.data;
+  const prefetchZone = usePrefetchZone(meta.data?.generatedAt);
 
   // Пересчитываем тиры, только когда поменялись данные, роль или метрика
   const scores = useMemo(() => (zoneData ? scoreZone(zoneData, role, stat) : []), [zoneData, role, stat]);
@@ -97,7 +98,7 @@ export default function TierPage() {
         </div>
       </header>
 
-      <ZoneTabs zones={zones} activeId={zone.id} hrefFor={(id) => link(`/raid/${id}`, { role, stat })} />
+      <ZoneTabs zones={zones} activeId={zone.id} hrefFor={(id) => link(`/raid/${id}`, { role, stat })} onIntent={prefetchZone} />
 
       <div className="toolbar">
         <Segmented

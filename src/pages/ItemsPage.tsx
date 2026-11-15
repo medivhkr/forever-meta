@@ -151,7 +151,7 @@ export default function ItemsPage() {
                   return (
                     <tr key={item.id}>
                       <td className="cell-wrap">
-                        <ItemLink item={item} size={30} />
+                        <ItemLink item={item} size={30} vt />
                       </td>
                       <td className="r strong">{item.ilvl}</td>
                       <td className="muted">

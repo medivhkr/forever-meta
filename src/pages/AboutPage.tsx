@@ -3,22 +3,90 @@ import { TIERS, MIN_PARSES } from '../data/tiers.ts';
 import { formatDateTime } from '../lib/format.ts';
 import { cssVars, usePageTitle } from '../lib/helpers.ts';
 
+// Что интересного во фронтенде и где это лежит в коде
+const TECH = [
+  {
+    title: 'Конструктор экипировки',
+    text: 'Состояние сборки в useReducer, вся логика — чистые функции. Сборка живёт в адресе страницы и в localStorage: ссылкой можно поделиться.',
+    code: 'src/planner/plan.ts',
+  },
+  {
+    title: 'Нативный <dialog>',
+    text: 'Окно выбора предмета: браузер сам держит фокус внутри, закрывает по Esc и блокирует страницу под окном.',
+    code: 'src/components/ItemPicker.tsx',
+  },
+  {
+    title: 'View Transitions API',
+    text: 'Иконка спека или персонажа «перелетает» из списка на его страницу. Data router React Router и view-transition-name в CSS.',
+    code: 'src/routes.tsx',
+  },
+  {
+    title: 'PWA и офлайн',
+    text: 'Сайт ставится на телефон как приложение. Service worker (Workbox) кеширует код, данные и иконки: открытые страницы работают без сети.',
+    code: 'vite.config.ts',
+  },
+  {
+    title: 'Ленивая загрузка и предзагрузка',
+    text: 'Каждая страница — отдельный кусок кода. Он начинает качаться при наведении на ссылку, а данные рейда — при наведении на вкладку.',
+    code: 'src/lib/pages.ts',
+  },
+  {
+    title: 'Подсказки как в игре',
+    text: 'Одна подсказка на всё приложение: контекст, портал в body, useLayoutEffect и ResizeObserver, чтобы не вылезать за экран.',
+    code: 'src/components/Hover.tsx',
+  },
+  {
+    title: 'Графики без библиотек',
+    text: 'Радар по боссам, тепловая карта и полосы нарисованы на SVG и CSS. Цвета — цвета классов и качества предметов.',
+    code: 'src/components/RadarChart.tsx',
+  },
+  {
+    title: 'Современные хуки',
+    text: 'useSyncExternalStore для статуса сети, useDeferredValue в поиске, queryOptions и prefetchQuery в TanStack Query.',
+    code: 'src/lib/useOnline.ts',
+  },
+  {
+    title: 'Тесты и CI',
+    text: 'Vitest и Testing Library: расчёт тиров, база предметов, логика конструктора, компоненты. GitHub Actions гоняет тесты перед каждым деплоем.',
+    code: 'src/**/*.test.ts',
+  },
+];
+
 export default function AboutPage() {
-  usePageTitle('О данных');
+  usePageTitle('О проекте');
   const { data: meta } = useMeta();
 
   return (
     <>
       <header className="page-head">
-        <p className="eyebrow">Методика</p>
-        <h1 className="page-title">Откуда цифры и как считается тир</h1>
-        <p className="page-sub">Коротко: реальные логи боёв из Warcraft Logs, лучшие парсы каждого спека, сравнение с лучшим спеком на том же боссе.</p>
+        <p className="eyebrow">О проекте</p>
+        <h1 className="page-title">Как устроен Forever Meta</h1>
+        <p className="page-sub">
+          Одностраничное приложение на React 19 и TypeScript без своего бэкенда: данные собираются скриптами в JSON, сайт лежит на
+          GitHub Pages и обновляется сам.
+        </p>
       </header>
+
+      <section className="block" aria-labelledby="tech">
+        <div className="block__head">
+          <h2 id="tech">Что внутри</h2>
+          <p>Фронтенд-приёмы, которые здесь используются, и где их найти в коде</p>
+        </div>
+        <ul className="tech">
+          {TECH.map((t) => (
+            <li key={t.title}>
+              <h3>{t.title}</h3>
+              <p>{t.text}</p>
+              <code>{t.code}</code>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <div className="prose">
         <h2>Откуда данные</h2>
         <p>
-          Все цифры берутся из публичного API <strong>Warcraft Logs</strong> (GraphQL, версия 2)
+          Рейтинги берутся из публичного API <strong>Warcraft Logs</strong> (GraphQL, версия 2)
           {meta ? (
             <>
               {' '}
@@ -40,8 +108,8 @@ export default function AboutPage() {
           можно надеть.
         </p>
         <p>
-          Персонажи пока демонстрационные: имена, гильдии и результаты придуманы, а экипировка подобрана из настоящих предметов
-          по типу брони, оружию класса и нужным характеристикам. Как только появится доступ к API, их заменят реальные игроки из
+          Персонажи пока демонстрационные: имена, гильдии и результаты придуманы, а экипировка подобрана из настоящих предметов по
+          типу брони, оружию класса и нужным характеристикам. Как только появится доступ к API, их заменят реальные игроки из
           рейтингов.
         </p>
 
@@ -80,14 +148,16 @@ export default function AboutPage() {
 
         <h2>Как обновляется</h2>
         <p>
-          Сайт статический и лежит на GitHub Pages. Раз в 6 часов GitHub Actions запускает сборщик: он получает токен Warcraft Logs,
-          скачивает рейтинги, считает статистику и пересобирает сайт. Ключ API хранится в секретах репозитория и в браузер не
-          попадает.
+          Раз в 6 часов GitHub Actions запускает тесты и сборщик: он получает токен Warcraft Logs, скачивает рейтинги, считает
+          статистику и пересобирает сайт. Ключ API хранится в секретах репозитория и в браузер не попадает.
           {meta ? ` Последнее обновление: ${formatDateTime(meta.generatedAt)}.` : ''}
         </p>
 
         <h2>Стек</h2>
-        <p>React 19, TypeScript, Vite, React Router, TanStack Query. Графики и тепловая карта нарисованы без библиотек, на CSS.</p>
+        <p>
+          React 19, TypeScript, Vite, React Router 7 (data router), TanStack Query 5, vite-plugin-pwa, Vitest и Testing Library. Без
+          UI-библиотек: всё оформление — свой CSS.
+        </p>
       </div>
     </>
   );

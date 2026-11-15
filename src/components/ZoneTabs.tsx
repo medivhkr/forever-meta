@@ -7,9 +7,10 @@ interface Props {
   zones: ZoneRef[];
   activeId: number;
   hrefFor: (zoneId: number) => string;
+  onIntent?: (zoneId: number) => void; // наведение или фокус: можно заранее подгрузить данные рейда
 }
 
-export default function ZoneTabs({ zones, activeId, hrefFor }: Props) {
+export default function ZoneTabs({ zones, activeId, hrefFor, onIntent }: Props) {
   return (
     <nav className="zones" aria-label="Рейды">
       {zones.map((zone) => {
@@ -20,6 +21,9 @@ export default function ZoneTabs({ zones, activeId, hrefFor }: Props) {
           <Link
             key={zone.id}
             to={hrefFor(zone.id)}
+            viewTransition
+            onMouseEnter={() => onIntent?.(zone.id)}
+            onFocus={() => onIntent?.(zone.id)}
             className={active ? 'zone is-active' : 'zone'}
             aria-current={active ? 'page' : undefined}
             title={title.en}

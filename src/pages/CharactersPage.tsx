@@ -160,7 +160,7 @@ function CharacterRow({ c, index, items, bossName }: { c: Character; index: numb
       <td className="r muted">{index + 1}</td>
       <td>
         <span className="player">
-          <SpecIcon cls={c.cls} spec={c.spec} size={32} />
+          <SpecIcon cls={c.cls} spec={c.spec} size={32} vt={`char-${c.id}`} />
           <span className="player__text">
             <CharacterName id={c.id} name={c.name} cls={c.cls} spec={c.spec} />
             <span className="player__sub">

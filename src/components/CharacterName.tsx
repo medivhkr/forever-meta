@@ -15,7 +15,7 @@ export default function CharacterName({ id, name, cls, spec }: Props) {
   const hover = useHoverTrigger({ kind: 'character', id });
   const info = specInfo(cls, spec);
   return (
-    <Link to={`/character/${id}`} className="char-name" style={cssVars({ '--c': info.color })} {...hover}>
+    <Link to={`/character/${id}`} className="char-name" style={cssVars({ '--c': info.color })} viewTransition {...hover}>
       {name}
     </Link>
   );

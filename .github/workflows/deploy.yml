@@ -36,6 +36,9 @@ jobs:
           WCL_CLIENT_SECRET: ${{ secrets.WCL_CLIENT_SECRET }}
         run: npm run collect
 
+      - name: Тесты
+        run: npm test
+
       - run: npm run build
 
       - uses: actions/configure-pages@v5

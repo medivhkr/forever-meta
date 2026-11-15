@@ -58,6 +58,9 @@ const SPECS: Record<string, SpecMeta | undefined> = {
   'druid/restoration': { name: 'Исцеление', role: 'heal', icon: 'spell_nature_healingtouch' },
 };
 
+// Все спеки в порядке классов: для выпадающих списков
+export const SPEC_KEYS = Object.keys(SPECS);
+
 export interface SpecInfo {
   key: string;
   cls: string;
