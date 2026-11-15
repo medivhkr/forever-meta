@@ -2901,6 +2901,9 @@ button.gear:disabled {
 
   .tspec__cls {
     display: block;
+    font-size: 11px;
+    font-weight: 500;
+    overflow-wrap: normal;
   }
 
   .doll {
