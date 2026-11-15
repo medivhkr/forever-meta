@@ -80,7 +80,7 @@ export default function ItemTooltip({ id, item: given, large = false }: Props) {
       )}
       <p className="wtt__source">
         Добыча: {item.boss}
-        {zone ? ` · ${zoneTitle(zone).ru}` : ''}
+        {zone ? `, ${zoneTitle(zone).ru}` : ''}
       </p>
     </div>
   );

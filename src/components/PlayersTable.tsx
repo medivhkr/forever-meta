@@ -1,7 +1,7 @@
 import type { PlayerRow } from '../data/tiers.ts';
 import { specInfo } from '../data/specs.ts';
 import { formatDate, formatDuration, formatNumber } from '../lib/format.ts';
-import { characterUrl, cssVars, reportUrl } from '../lib/helpers.ts';
+import { characterUrl, reportUrl } from '../lib/helpers.ts';
 import CharacterName from './CharacterName.tsx';
 import SpecIcon from './SpecIcon.tsx';
 
@@ -50,11 +50,11 @@ export default function PlayersTable({ players, site, unit }: Props) {
               <tr key={`${p.name}-${p.server}-${info.key}-${i}`}>
                 <td className={`r ${rankClass(i + 1)}`}>{i + 1}</td>
                 <td>
-                  <span className="player" style={cssVars({ '--c': info.color })}>
+                  <span className="player">
                     <SpecIcon cls={p.cls} spec={p.spec} size={28} />
                     <span className="player__text">
                       {p.charId ? (
-                        <CharacterName id={p.charId} name={p.name} cls={p.cls} spec={p.spec} />
+                        <CharacterName id={p.charId} name={p.name} />
                       ) : wclLink ? (
                         <a className="player__name" href={characterUrl(site, p.region, p.server, p.name)} target="_blank" rel="noreferrer">
                           {p.name}
@@ -64,14 +64,14 @@ export default function PlayersTable({ players, site, unit }: Props) {
                       )}
                       <span className="player__sub">
                         {info.name}, {info.clsName.toLowerCase()}
-                        {p.guild ? ` · ${p.guild}` : ''}
+                        {p.guild ? `, <${p.guild}>` : ''}
                       </span>
                     </span>
                   </span>
                 </td>
                 <td className="muted">
                   {p.server}
-                  {p.region ? ` · ${p.region.toUpperCase()}` : ''}
+                  {p.region ? `, ${p.region.toUpperCase()}` : ''}
                 </td>
                 <td className="r strong">{formatNumber(p.amount)}</td>
                 <td className="r muted">{formatDuration(p.duration)}</td>

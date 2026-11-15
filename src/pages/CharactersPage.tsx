@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useCharacters, useItems, useMeta } from '../data/api.ts';
-import { FACTION_LABEL, RACE_LABEL } from '../data/items.ts';
+import { FACTION_LABEL } from '../data/items.ts';
 import { ROLES, ROLE_LABEL, specInfo } from '../data/specs.ts';
 import type { Character, GearSlot, Item } from '../data/types.ts';
+import { formatIlvl } from '../lib/format.ts';
 import { usePageTitle } from '../lib/helpers.ts';
 import CharacterName from '../components/CharacterName.tsx';
 import GameIcon from '../components/GameIcon.tsx';
@@ -37,7 +38,7 @@ export default function CharactersPage() {
         else next.delete(key);
         return next;
       },
-      { replace: true },
+      { replace: true, preventScrollReset: true },
     );
   }
 
@@ -65,18 +66,17 @@ export default function CharactersPage() {
   return (
     <>
       <header className="page-head">
-        <p className="eyebrow">TBC Anniversary · демо-персонажи</p>
         <h1 className="page-title">Персонажи</h1>
         <p className="page-sub">
-          {list.length} героев в настоящей рейдовой экипировке из базы Wowhead. Имена, гильдии и результаты придуманы для примера.
-          Наведи на имя, чтобы увидеть, что на персонаже надето.
+          {list.length} героев TBC Anniversary в настоящей рейдовой экипировке. Имена, гильдии и результаты придуманы для примера.
+          Наведи на имя, чтобы увидеть, что надето.
         </p>
       </header>
 
       <div className="filters">
         <input
           id="characters-search"
-          className="input"
+          className="input input--search"
           type="search"
           placeholder="Имя или гильдия"
           value={query}
@@ -96,7 +96,7 @@ export default function CharactersPage() {
                 title={info.clsName}
                 onClick={() => setParam('class', active ? '' : key)}
               >
-                <GameIcon icon={`classicon_${key}`} size={28} color={info.color} letter={info.clsName.charAt(0)} className="class-btn__icon" />
+                <GameIcon icon={`classicon_${key}`} size={32} color={info.color} letter={info.clsName.charAt(0)} className="class-btn__icon" />
                 <span className="sr-only">{info.clsName}</span>
               </button>
             );
@@ -133,7 +133,7 @@ export default function CharactersPage() {
                 <th scope="col">Персонаж</th>
                 <th scope="col">Гильдия</th>
                 <th scope="col" className="r">
-                  Ур. предметов
+                  Уровень предметов
                 </th>
                 <th scope="col">Лучший бой</th>
                 <th scope="col">Экипировка</th>
@@ -160,11 +160,11 @@ function CharacterRow({ c, index, items, bossName }: { c: Character; index: numb
       <td className="r muted">{index + 1}</td>
       <td>
         <span className="player">
-          <SpecIcon cls={c.cls} spec={c.spec} size={32} vt={`char-${c.id}`} />
+          <SpecIcon cls={c.cls} spec={c.spec} size={36} vt={`char-${c.id}`} />
           <span className="player__text">
-            <CharacterName id={c.id} name={c.name} cls={c.cls} spec={c.spec} />
+            <CharacterName id={c.id} name={c.name} />
             <span className="player__sub">
-              {RACE_LABEL[c.race]} · {info.name}, {info.clsName.toLowerCase()}
+              {info.name}, {info.clsName.toLowerCase()}
             </span>
           </span>
         </span>
@@ -172,20 +172,20 @@ function CharacterRow({ c, index, items, bossName }: { c: Character; index: numb
       <td>
         <span className="guild">
           <span className={`faction-dot faction-dot--${c.faction}`} title={FACTION_LABEL[c.faction]} />
-          <span>
-            <span className="guild__name">&lt;{c.guild}&gt;</span>
+          <span className="player__text">
+            <span className="guild__name">{c.guild}</span>
             <span className="player__sub">
-              {c.realm} · {c.region}
+              {c.realm}, {c.region}
             </span>
           </span>
         </span>
       </td>
       <td className="r">
-        <span className="ilvl">{c.ilvl.toFixed(1)}</span>
+        <span className="ilvl">{formatIlvl(c.ilvl)}</span>
       </td>
       <td>
         {best ? (
-          <span className="best">
+          <span className="player__text">
             <span>{bossName.get(best.e) ?? 'Босс'}</span>
             <span className="player__sub">
               {best.r}-е место из {best.n}
@@ -212,8 +212,8 @@ function CharacterRow({ c, index, items, bossName }: { c: Character; index: numb
 function StripIcon({ item }: { item: Item }) {
   const hover = useHoverTrigger({ kind: 'item', id: item.id });
   return (
-    <Link to={`/item/${item.id}`} className="strip__item" aria-label={item.name} tabIndex={-1} {...hover}>
-      <ItemIcon item={item} size={26} />
+    <Link to={`/item/${item.id}`} className="strip__item" aria-label={item.name} tabIndex={-1} viewTransition {...hover}>
+      <ItemIcon item={item} size={28} />
     </Link>
   );
 }

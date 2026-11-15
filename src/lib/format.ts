@@ -22,3 +22,7 @@ export function plural(n: number, one: string, few: string, many: string): strin
   if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return few;
   return many;
 }
+
+// Средний уровень предметов: 139,4
+const ilvlFmt = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+export const formatIlvl = (n: number) => ilvlFmt.format(n);

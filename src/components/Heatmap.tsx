@@ -13,9 +13,20 @@ interface Props {
   specHref: (score: SpecScore) => string;
 }
 
-// 60% от лучшего и ниже — тусклая клетка, 100% — самая яркая.
+// Шкала одного цвета: 60% от лучшего и ниже — самая светлая клетка, 100% — самая насыщенная.
+const FLOOR = 0.6;
 function heat(rel: number): number {
-  return Math.round(Math.min(1, Math.max(0, (rel - 0.6) / 0.4)) * 100);
+  return Math.round(Math.min(1, Math.max(0, (rel - FLOOR) / (1 - FLOOR))) * 100);
+}
+
+export function HeatLegend() {
+  return (
+    <div className="heat-legend" aria-hidden="true">
+      <span>{Math.round(FLOOR * 100)}% и ниже</span>
+      <i />
+      <span>100%</span>
+    </div>
+  );
 }
 
 export default function Heatmap({ zone, scores, bossHref, specHref }: Props) {
@@ -30,12 +41,12 @@ export default function Heatmap({ zone, scores, bossHref, specHref }: Props) {
             {zone.encounters.map((enc) => (
               <th key={enc.id} scope="col" className="heat__boss">
                 <Link to={bossHref(enc.id)} title={enc.name}>
-                  <span>{enc.name}</span>
+                  {enc.name}
                 </Link>
               </th>
             ))}
             <th scope="col" className="heat__total">
-              Итог
+              В среднем
             </th>
           </tr>
         </thead>
@@ -45,8 +56,8 @@ export default function Heatmap({ zone, scores, bossHref, specHref }: Props) {
             return (
               <tr key={info.key}>
                 <th scope="row" className="heat__spec">
-                  <Link to={specHref(s)} className="spec-label" style={cssVars({ '--c': info.color })}>
-                    <SpecIcon cls={s.cls} spec={s.spec} size={22} />
+                  <Link to={specHref(s)} className="spec-label">
+                    <SpecIcon cls={s.cls} spec={s.spec} size={24} />
                     <span className="spec-label__name">{info.name}</span>
                     <span className="spec-label__cls">{info.clsName}</span>
                   </Link>
@@ -56,16 +67,15 @@ export default function Heatmap({ zone, scores, bossHref, specHref }: Props) {
                   if (!cell) {
                     return (
                       <td key={enc.id} className="heat__cell is-none" title={`${enc.name}: нет данных`}>
-                        ·
+                        <span className="sr-only">нет данных</span>
                       </td>
                     );
                   }
-                  const p = heat(cell.rel);
                   return (
                     <td
                       key={enc.id}
-                      className={p >= 80 ? 'heat__cell is-hot' : 'heat__cell'}
-                      style={cssVars({ '--p': p })}
+                      className="heat__cell"
+                      style={cssVars({ '--p': heat(cell.rel) })}
                       title={`${enc.name}: ${formatPercent(cell.rel)} от лучшего, ${cell.rank}-е место`}
                     >
                       {Math.round(cell.rel * 100)}

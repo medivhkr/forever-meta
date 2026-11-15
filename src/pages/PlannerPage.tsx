@@ -15,8 +15,8 @@ import {
 } from '../data/items.ts';
 import { SPEC_KEYS, specInfo } from '../data/specs.ts';
 import type { GearSlot, Item } from '../data/types.ts';
-import { formatNumber } from '../lib/format.ts';
-import { cssVars, usePageTitle } from '../lib/helpers.ts';
+import { formatIlvl, formatNumber } from '../lib/format.ts';
+import { usePageTitle } from '../lib/helpers.ts';
 import { decodePlan, emptyGear, encodePlan, planReducer, statDelta, type PlanState } from '../planner/plan.ts';
 import ItemIcon from '../components/ItemIcon.tsx';
 import ItemPicker from '../components/ItemPicker.tsx';
@@ -114,22 +114,14 @@ export default function PlannerPage() {
       .catch(() => setCopied(false));
   }
 
-  const slotView = (slot: GearSlot, side: 'left' | 'right') => (
-    <PlannerSlot
-      key={slot}
-      slot={slot}
-      item={itemIn(slot)}
-      side={side}
-      disabled={slot === 'offhand' && twoHanded}
-      onOpen={() => setPicking(slot)}
-    />
+  const slotView = (slot: GearSlot) => (
+    <PlannerSlot key={slot} slot={slot} item={itemIn(slot)} disabled={slot === 'offhand' && twoHanded} onOpen={() => setPicking(slot)} />
   );
 
   return (
     <>
       <header className="page-head">
-        <p className="eyebrow">Инструмент</p>
-        <h1 className="page-title">Конструктор экипировки</h1>
+        <h1 className="page-title">Конструктор</h1>
         <p className="page-sub">
           Собери комплект из {allItems.length} рейдовых предметов TBC и смотри, как меняются характеристики. Сборка хранится в адресе
           страницы: отправь ссылку, и у друга откроется то же самое.
@@ -175,7 +167,7 @@ export default function PlannerPage() {
               const ci = specInfo(c.cls, c.spec);
               return (
                 <option key={c.id} value={c.id}>
-                  {c.name} — {ci.name}, {ci.clsName.toLowerCase()} ({c.ilvl.toFixed(0)})
+                  {c.name}: {ci.name}, {ci.clsName.toLowerCase()}, {formatIlvl(c.ilvl)}
                 </option>
               );
             })}
@@ -191,49 +183,47 @@ export default function PlannerPage() {
               Надеть всё как у {base.name}
             </button>
           )}
-          <button type="button" className="btn" onClick={copyLink} aria-live="polite">
+          <button type="button" className="btn btn--primary" onClick={copyLink} aria-live="polite">
             {copied ? 'Ссылка скопирована' : 'Скопировать ссылку'}
           </button>
-          <button type="button" className="btn btn--ghost" onClick={() => dispatch({ type: 'clear' })}>
+          <button type="button" className="btn btn--plain btn--danger" onClick={() => dispatch({ type: 'clear' })}>
             Снять всё
           </button>
         </div>
       </div>
 
-      <div style={cssVars({ '--c': info.color })}>
-        <div className="doll">
-          <div className="doll__col">{GEAR_LEFT.map((slot) => slotView(slot, 'left'))}</div>
-          <div className="doll__center">
-            <div className="doll-stats">
-              <div className="planner-ilvl">
-                <strong>{ilvl.toFixed(1)}</strong>
-                <span>
-                  средний уровень предметов
-                  {baseIlvl !== null && <Delta value={ilvl - baseIlvl} digits={1} />}
-                </span>
-              </div>
-              <h2>
-                {info.name}, {info.clsName.toLowerCase()}
-              </h2>
-              <dl>
-                {ROLE_STATS[focus].map((key) => (
-                  <div key={key}>
-                    <dt>{STAT_LABEL[key] ?? 'Броня'}</dt>
-                    <dd>
-                      {delta && <Delta value={delta[key] ?? 0} />}
-                      {formatNumber(totals[key] ?? 0)}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-              <p className="doll-stats__hint">
-                {base ? `Зелёным и красным — разница с экипировкой ${base.name}.` : 'Выбери персонажа в «Сравнить с», чтобы видеть разницу.'}
-              </p>
+      <div className="doll">
+        <div className="doll__col">{GEAR_LEFT.map(slotView)}</div>
+        <div className="doll__center">
+          <div className="doll-stats">
+            <div className="planner-ilvl">
+              <strong>{formatIlvl(ilvl)}</strong>
+              <span>
+                средний уровень предметов
+                {baseIlvl !== null && <Delta value={ilvl - baseIlvl} digits={1} />}
+              </span>
             </div>
+            <h3>
+              {info.name}, {info.clsName.toLowerCase()}
+            </h3>
+            <dl>
+              {ROLE_STATS[focus].map((key) => (
+                <div key={key}>
+                  <dt>{STAT_LABEL[key] ?? 'Броня'}</dt>
+                  <dd>
+                    {delta && <Delta value={delta[key] ?? 0} />}
+                    {formatNumber(totals[key] ?? 0)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <p className="doll-stats__hint">
+              {base ? `Зелёным и красным отмечена разница с экипировкой ${base.name}.` : 'Выбери персонажа в поле «Сравнить с», чтобы видеть разницу.'}
+            </p>
           </div>
-          <div className="doll__col doll__col--right">{GEAR_RIGHT.map((slot) => slotView(slot, 'right'))}</div>
-          <div className="doll__weapons">{GEAR_WEAPONS.map((slot) => slotView(slot, 'left'))}</div>
         </div>
+        <div className="doll__col doll__col--right">{GEAR_RIGHT.map(slotView)}</div>
+        <div className="doll__weapons">{GEAR_WEAPONS.map(slotView)}</div>
       </div>
 
       {picking && (
@@ -275,14 +265,13 @@ function Delta({ value, digits = 0 }: { value: number; digits?: number }) {
 interface SlotProps {
   slot: GearSlot;
   item: Item | undefined;
-  side: 'left' | 'right';
   disabled: boolean;
   onOpen: () => void;
 }
 
-function PlannerSlot({ slot, item, side, disabled, onOpen }: SlotProps) {
+function PlannerSlot({ slot, item, disabled, onOpen }: SlotProps) {
   const hover = useHoverTrigger(item ? { kind: 'item', id: item.id } : null);
-  const classes = ['gear', 'gear--btn', side === 'right' ? 'gear--right' : '', item ? '' : 'is-empty'].filter(Boolean).join(' ');
+  const classes = item ? 'gear gear--btn' : 'gear gear--btn is-empty';
   return (
     <button
       type="button"
@@ -298,7 +287,7 @@ function PlannerSlot({ slot, item, side, disabled, onOpen }: SlotProps) {
       }}
     >
       {item ? (
-        <ItemIcon item={item} size={42} />
+        <ItemIcon item={item} size={40} />
       ) : (
         <span className="gear__blank gear__blank--add" aria-hidden="true">
           +
@@ -306,11 +295,9 @@ function PlannerSlot({ slot, item, side, disabled, onOpen }: SlotProps) {
       )}
       <span className="gear__text">
         <span className="gear__name">{item ? item.name : disabled ? 'Занята двуручным оружием' : 'Выбрать предмет'}</span>
-        <span className="gear__meta">
-          {GEAR_LABEL[slot]}
-          {item ? ` · ${item.ilvl}` : ''}
-        </span>
+        <span className="gear__meta">{GEAR_LABEL[slot]}</span>
       </span>
+      {item && <span className="gear__ilvl">{item.ilvl}</span>}
     </button>
   );
 }

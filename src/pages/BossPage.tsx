@@ -1,12 +1,13 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 import { useMeta, useZone, useItems } from '../data/api.ts';
 import { ROLES, ROLE_LABEL, STATS, STAT_LABEL, zoneTitle } from '../data/specs.ts';
 import { STAT_SHORT, bossKey, keyStats } from '../data/items.ts';
 import { rankEncounter, topPlayers } from '../data/tiers.ts';
 import { link, usePageTitle, useViewParams } from '../lib/helpers.ts';
+import BackLink from '../components/BackLink.tsx';
 import ItemLink from '../components/ItemLink.tsx';
-import Segmented from '../components/Segmented.tsx';
+import Segmented, { ThumbView, useThumb } from '../components/Segmented.tsx';
 import SpecBars from '../components/SpecBars.tsx';
 import PlayersTable from '../components/PlayersTable.tsx';
 import { EmptyState, ErrorState, Loading } from '../components/States.tsx';
@@ -23,6 +24,8 @@ export default function BossPage() {
   const { zoneId, encounterId } = useParams();
   const { role, stat, update } = useViewParams();
   const [tab, setTab] = useState<Tab>('specs');
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const thumb = useThumb(tabsRef, '[aria-selected="true"]', tab);
   const meta = useMeta();
   const items = useItems();
   const zone = meta.data?.zones.find((z) => String(z.id) === zoneId);
@@ -77,7 +80,7 @@ export default function BossPage() {
       <EmptyState title="По этой роли данных нет" />
     );
   } else {
-    sub = 'Эпические предметы, которые падают с этого босса. Данные — Wowhead и AtlasLoot.';
+    sub = 'Эпические предметы, которые падают с этого босса. Данные Wowhead и AtlasLoot.';
     panel = items.isPending ? (
       <Loading />
     ) : loot.length ? (
@@ -87,7 +90,7 @@ export default function BossPage() {
             <tr>
               <th scope="col">Предмет</th>
               <th scope="col" className="r">
-                Ур.
+                Уровень
               </th>
               <th scope="col">Слот</th>
               <th scope="col">Главное</th>
@@ -97,7 +100,7 @@ export default function BossPage() {
             {loot.map((item) => (
               <tr key={item.id}>
                 <td className="cell-wrap">
-                  <ItemLink item={item} size={30} />
+                  <ItemLink item={item} size={32} vt />
                 </td>
                 <td className="r strong">{item.ilvl}</td>
                 <td className="muted">
@@ -127,65 +130,75 @@ export default function BossPage() {
 
   return (
     <>
-      <nav className="crumbs" aria-label="Путь">
-        <Link to={link(`/raid/${zone.id}`, { role, stat })}>{title.ru}</Link>
-        <span aria-hidden="true">/</span>
-        <span>{encounter.name}</span>
-      </nav>
+      <BackLink to={link(`/raid/${zone.id}`, { role, stat })}>{title.ru}</BackLink>
 
       <header className="page-head">
-        <p className="eyebrow">
-          {meta.data.gameVersion} · босс {index + 1} из {zone.encounters.length}
-        </p>
         <h1 className="page-title">{encounter.name}</h1>
         <p className="page-sub">
-          {title.ru}. {sub}
+          {title.ru}, босс {index + 1} из {zone.encounters.length}. {sub}
         </p>
       </header>
 
-      <div className="tabs" role="tablist" aria-label="Вид">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            id={`tab-${t.id}`}
-            aria-selected={tab === t.id}
-            aria-controls="boss-panel"
-            onClick={() => setTab(t.id)}
-          >
-            {t.label}
-            {t.id === 'loot' && loot.length > 0 && <span className="tabs__count">{loot.length}</span>}
-          </button>
-        ))}
-      </div>
-
-      {tab !== 'loot' && (
-        <div className="toolbar">
-          <Segmented
-            label="Роль"
-            value={role}
-            options={ROLES.map((r) => ({ value: r, label: ROLE_LABEL[r] }))}
-            onChange={(r) => update({ role: r })}
-          />
-          {tab === 'specs' && (
-            <Segmented
-              label="Метрика"
-              value={stat}
-              options={STATS.map((s) => ({ value: s, label: STAT_LABEL[s].short, hint: STAT_LABEL[s].long }))}
-              onChange={(s) => update({ stat: s })}
-            />
-          )}
+      <div className="controls">
+        <div className="seg">
+          <div ref={tabsRef} className={thumb ? 'seg__group has-thumb' : 'seg__group'} role="tablist" aria-label="Вид">
+            <ThumbView thumb={thumb} />
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                id={`tab-${t.id}`}
+                aria-selected={tab === t.id}
+                aria-controls="boss-panel"
+                onClick={() => setTab(t.id)}
+              >
+                {t.label}
+                {t.id === 'loot' && loot.length > 0 && <span className="seg__count">{loot.length}</span>}
+              </button>
+            ))}
+          </div>
         </div>
-      )}
+
+        {tab !== 'loot' && (
+          <div className="controls__row">
+            <Segmented
+              label="Роль"
+              value={role}
+              options={ROLES.map((r) => ({ value: r, label: ROLE_LABEL[r] }))}
+              onChange={(r) => update({ role: r })}
+            />
+            {tab === 'specs' && (
+              <Segmented
+                label="Метрика"
+                value={stat}
+                options={STATS.map((s) => ({ value: s, label: STAT_LABEL[s].short, hint: STAT_LABEL[s].long }))}
+                onChange={(s) => update({ stat: s })}
+              />
+            )}
+          </div>
+        )}
+      </div>
 
       <div id="boss-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
         {panel}
       </div>
 
       <nav className="pager" aria-label="Другие боссы">
-        {prev ? <Link to={link(`/raid/${zone.id}/boss/${prev.id}`, { role, stat })}>← {prev.name}</Link> : <span />}
-        {next && <Link to={link(`/raid/${zone.id}/boss/${next.id}`, { role, stat })}>{next.name} →</Link>}
+        {prev ? (
+          <Link to={link(`/raid/${zone.id}/boss/${prev.id}`, { role, stat })} viewTransition>
+            <span className="pager__dir">Предыдущий босс</span>
+            {prev.name}
+          </Link>
+        ) : (
+          <span />
+        )}
+        {next && (
+          <Link to={link(`/raid/${zone.id}/boss/${next.id}`, { role, stat })} className="pager__next" viewTransition>
+            <span className="pager__dir">Следующий босс</span>
+            {next.name}
+          </Link>
+        )}
       </nav>
     </>
   );

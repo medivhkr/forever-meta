@@ -1,14 +1,27 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 import { useCharacters, useItems, useMeta } from '../data/api.ts';
 import { FOCUS_LABEL, bossKey, itemFocus, wowheadUrl } from '../data/items.ts';
 import { specInfo, zoneTitle } from '../data/specs.ts';
+import { plural } from '../lib/format.ts';
 import { usePageTitle } from '../lib/helpers.ts';
+import BackLink from '../components/BackLink.tsx';
 import CharacterName from '../components/CharacterName.tsx';
+import ItemIcon from '../components/ItemIcon.tsx';
 import ItemLink from '../components/ItemLink.tsx';
-import ItemTooltip from '../components/ItemTooltip.tsx';
 import SpecIcon from '../components/SpecIcon.tsx';
 import { EmptyState, ErrorState, Loading } from '../components/States.tsx';
+
+// Страница предмета устроена как «Технические характеристики» на сайте Apple:
+// слева название раздела, справа содержимое, разделы разделены тонкими линиями.
+function Row({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="specs__row">
+      <h2 className="specs__title">{title}</h2>
+      <div className="specs__body">{children}</div>
+    </section>
+  );
+}
 
 export default function ItemPage() {
   const { id } = useParams();
@@ -57,72 +70,148 @@ export default function ItemPage() {
   }
 
   const zoneName = items.data.zoneName.get(item.zone);
+  const kind = item.typeRu ? `${item.slotRu}, ${item.typeRu.toLowerCase()}` : item.slotRu;
 
   return (
     <>
-      <nav className="crumbs" aria-label="Путь">
-        <Link to="/items">Предметы</Link>
-        <span aria-hidden="true">/</span>
-        <span>{item.name}</span>
-      </nav>
+      <BackLink to="/items">Предметы</BackLink>
 
-      <div className="item-page">
-        <div className="item-page__tooltip">
-          <ItemTooltip item={item} large />
-          <a className="btn btn--ghost" href={wowheadUrl(item.id)} target="_blank" rel="noreferrer">
-            Открыть на Wowhead ↗
-          </a>
+      <header className="hero" data-q={item.q}>
+        <ItemIcon item={item} size={96} vt />
+        <div className="hero__text">
+          <h1 className="hero__title hero__title--item">{item.name}</h1>
+          <p className="hero__sub">
+            {kind}. Уровень предмета {item.ilvl}.
+          </p>
+          <p className="hero__en" lang="en">
+            {item.nameEn}
+          </p>
         </div>
+      </header>
 
-        <div className="item-page__side">
-          <section className="panel">
-            <h2>Где достать</h2>
-            <p>
-              {bossLink ? <Link to={bossLink}>{item.boss}</Link> : item.boss}
-              {zoneName ? ` · ${zoneTitle(zoneName).ru}` : ''}
-            </p>
-            <p className="muted small">
-              {item.nameEn} · {FOCUS_LABEL[itemFocus(item)].toLowerCase()}
-              {item.phase ? ` · ${item.phase}-я фаза` : ''}
-            </p>
-          </section>
+      <div className="specs">
+        <Row title="Основное">
+          <ul className="lines">
+            {item.bind && <li>{item.bind}</li>}
+            {item.unique && <li>Уникальный</li>}
+            {item.armor !== undefined && <li>Броня: {item.armor}</li>}
+            {item.dmg && (
+              <li>
+                Урон: {item.dmg[0]}–{item.dmg[1]}
+                {item.speed !== undefined ? `, скорость ${item.speed.toFixed(2).replace('.', ',')}` : ''}
+                {item.dps !== undefined ? ` (${item.dps.toFixed(1).replace('.', ',')} ед. урона в секунду)` : ''}
+              </li>
+            )}
+            {item.classes && <li>Классы: {item.classes}</li>}
+            <li>Требуется 70-й уровень</li>
+            {item.phase && <li>Появляется в {item.phase}-й фазе</li>}
+            <li>Подходит: {FOCUS_LABEL[itemFocus(item)].toLowerCase()}</li>
+          </ul>
+        </Row>
 
-          <section className="panel">
-            <h2>Кто носит</h2>
-            {wearers.length ? (
-              <ul className="people">
-                {wearers.map((c) => {
-                  const info = specInfo(c.cls, c.spec);
-                  return (
-                    <li key={c.id}>
-                      <SpecIcon cls={c.cls} spec={c.spec} size={24} />
-                      <CharacterName id={c.id} name={c.name} cls={c.cls} spec={c.spec} />
-                      <span className="muted small">
+        {item.statLines.length > 0 && (
+          <Row title="Характеристики">
+            <ul className="lines lines--strong">
+              {item.statLines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </Row>
+        )}
+
+        {item.socketsRu && item.socketsRu.length > 0 && (
+          <Row title="Гнёзда">
+            <ul className="lines">
+              {item.socketsRu.map((socket, i) => (
+                <li key={`${socket}-${i}`} className="wtt__socket" data-socket={item.sockets?.[i]}>
+                  {socket}
+                </li>
+              ))}
+              {item.socketBonus && <li className="muted">{item.socketBonus}</li>}
+            </ul>
+          </Row>
+        )}
+
+        {item.effects && item.effects.length > 0 && (
+          <Row title="Эффекты">
+            <ul className="lines">
+              {item.effects.map((effect) => (
+                <li key={effect} className="text-good">
+                  {effect}
+                </li>
+              ))}
+            </ul>
+          </Row>
+        )}
+
+        {item.set && (
+          <Row title="Комплект">
+            <p className="lines__head">
+              {item.set.name}, {item.set.size} {plural(item.set.size, 'предмет', 'предмета', 'предметов')}
+            </p>
+            <ul className="lines">
+              {item.set.bonuses.map((bonus) => (
+                <li key={bonus} className="muted">
+                  {bonus}
+                </li>
+              ))}
+            </ul>
+          </Row>
+        )}
+
+        <Row title="Где достать">
+          <p className="lines__head">
+            {bossLink ? (
+              <Link to={bossLink} viewTransition>
+                {item.boss}
+              </Link>
+            ) : (
+              item.boss
+            )}
+          </p>
+          {zoneName && <p className="muted">{zoneTitle(zoneName).ru}</p>}
+          <p className="lines__more">
+            <a href={wowheadUrl(item.id)} target="_blank" rel="noreferrer">
+              Открыть на Wowhead ↗
+            </a>
+          </p>
+        </Row>
+
+        <Row title="Кто носит">
+          {wearers.length ? (
+            <ul className="people">
+              {wearers.map((c) => {
+                const info = specInfo(c.cls, c.spec);
+                return (
+                  <li key={c.id}>
+                    <SpecIcon cls={c.cls} spec={c.spec} size={32} />
+                    <span className="player__text">
+                      <CharacterName id={c.id} name={c.name} />
+                      <span className="player__sub">
                         {info.name}, {info.clsName.toLowerCase()}
                       </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="muted">Никто из демо-персонажей</p>
-            )}
-          </section>
-
-          {similar.length > 0 && (
-            <section className="panel">
-              <h2>Похожие предметы</h2>
-              <ul className="similar">
-                {similar.map((other) => (
-                  <li key={other.id}>
-                    <ItemLink item={other} size={26} />
-                    <span className="muted small">{other.ilvl}</span>
+                    </span>
                   </li>
-                ))}
-              </ul>
-            </section>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="muted">Никто из демо-персонажей</p>
           )}
-        </div>
+        </Row>
+
+        {similar.length > 0 && (
+          <Row title="Похожие предметы">
+            <ul className="similar">
+              {similar.map((other) => (
+                <li key={other.id}>
+                  <ItemLink item={other} size={32} />
+                  <span className="muted small">{other.ilvl}</span>
+                </li>
+              ))}
+            </ul>
+          </Row>
+        )}
       </div>
     </>
   );

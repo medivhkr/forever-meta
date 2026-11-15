@@ -10,19 +10,22 @@ interface Props {
   specHref: (cls: string, spec: string) => string;
 }
 
-// Горизонтальные полосы: длина — доля от лучшего спека на этом боссе.
+// Рейтинг спеков на боссе. Длина полосы — доля от лучшего спека; все полосы одного цвета,
+// спек узнаётся по иконке и названию, а не по цвету.
 export default function SpecBars({ rows, specHref }: Props) {
   return (
     <ol className="bars">
       {rows.map((row) => {
         const info = specInfo(row.stats.cls, row.stats.spec, row.stats.metric);
         return (
-          <li key={info.key} className="bar" style={cssVars({ '--c': info.color, '--w': `${(row.rel * 100).toFixed(1)}%` })}>
+          <li key={info.key} className="bar" style={cssVars({ '--w': `${(row.rel * 100).toFixed(1)}%` })}>
             <span className="bar__rank">{row.rank}</span>
-            <Link to={specHref(row.stats.cls, row.stats.spec)} className="bar__label">
-              <SpecIcon cls={row.stats.cls} spec={row.stats.spec} size={26} />
-              <span className="bar__name">{info.name}</span>
-              <span className="bar__cls">{info.clsName}</span>
+            <Link to={specHref(row.stats.cls, row.stats.spec)} className="bar__label" viewTransition>
+              <SpecIcon cls={row.stats.cls} spec={row.stats.spec} size={32} />
+              <span className="bar__text">
+                <span className="bar__name">{info.name}</span>
+                <span className="bar__cls">{info.clsName}</span>
+              </span>
             </Link>
             <span className="bar__track" aria-hidden="true">
               <span className="bar__fill" />

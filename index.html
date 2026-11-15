@@ -1,16 +1,30 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="Тир-лист спеков World of Warcraft, персонажи с экипировкой и база рейдовых предметов TBC." />
-    <meta name="theme-color" content="#08090c" />
+    <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-title" content="Forever Meta" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <!-- Оформление выбирается до первой отрисовки, чтобы тёмная тема не мигала светлой -->
+    <script>
+      (function () {
+        var theme = 'light';
+        try {
+          var saved = localStorage.getItem('forever-meta:theme');
+          if (saved === 'dark' || saved === 'system') theme = saved;
+        } catch (e) {}
+        document.documentElement.dataset.theme = theme;
+        var dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (dark) document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000000');
+      })();
+    </script>
+    <!-- На устройствах Apple текст набран системным SF Pro, на остальных — Inter с оптическими размерами -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Forum&family=Golos+Text:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet" />
     <title>Forever Meta — тир-лист спеков WoW</title>
   </head>
   <body>

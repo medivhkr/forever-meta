@@ -2,8 +2,7 @@ import { useCharacters, useItems } from '../data/api.ts';
 import { GEAR_LEFT, GEAR_RIGHT, GEAR_WEAPONS, RACE_LABEL, ROLE_STATS, STAT_LABEL, characterFocus, sumStats } from '../data/items.ts';
 import { specInfo } from '../data/specs.ts';
 import type { GearSlot } from '../data/types.ts';
-import { formatNumber } from '../lib/format.ts';
-import { cssVars } from '../lib/helpers.ts';
+import { formatIlvl, formatNumber } from '../lib/format.ts';
 import ItemIcon from './ItemIcon.tsx';
 import SpecIcon from './SpecIcon.tsx';
 
@@ -33,21 +32,21 @@ export default function CharacterCard({ id }: { id: string }) {
   const shown = ROLE_STATS[characterFocus(c)].slice(0, 4);
 
   return (
-    <div className="ccard" style={cssVars({ '--c': info.color })}>
+    <div className="ccard">
       <div className="ccard__head">
         <SpecIcon cls={c.cls} spec={c.spec} size={44} eager />
         <div className="ccard__who">
           <p className="ccard__name">{c.name}</p>
           <p className="ccard__sub">
-            {RACE_LABEL[c.race] ?? c.race} · {info.name}, {info.clsName.toLowerCase()}
+            {info.name}, {info.clsName.toLowerCase()}. {RACE_LABEL[c.race] ?? c.race}
           </p>
           <p className="ccard__sub">
-            &lt;{c.guild}&gt; · {c.realm}
+            &lt;{c.guild}&gt;, {c.realm}
           </p>
         </div>
         <div className="ccard__ilvl">
-          <strong>{c.ilvl.toFixed(1)}</strong>
-          <span>ур. предметов</span>
+          <strong>{formatIlvl(c.ilvl)}</strong>
+          <span>уровень предметов</span>
         </div>
       </div>
 
@@ -57,7 +56,7 @@ export default function CharacterCard({ id }: { id: string }) {
             {column.map(({ slot, item }) => (
               <li key={slot} data-q={item?.q}>
                 {item ? <ItemIcon item={item} size={20} eager /> : <span className="ccard__empty" />}
-                <span className="ccard__item">{item ? item.name : '—'}</span>
+                <span className="ccard__item">{item ? item.name : 'Пусто'}</span>
                 {item && <span className="ccard__lvl">{item.ilvl}</span>}
               </li>
             ))}

@@ -4,6 +4,7 @@ import { useCharacters, useItems } from '../data/api.ts';
 import { ARMOR_TYPES, FOCUS_LABEL, SLOT_LABEL, STAT_SHORT, itemFocus, keyStats, type Focus } from '../data/items.ts';
 import { zoneTitle } from '../data/specs.ts';
 import type { ItemSlot } from '../data/types.ts';
+import { plural } from '../lib/format.ts';
 import { usePageTitle } from '../lib/helpers.ts';
 import ItemLink from '../components/ItemLink.tsx';
 import Segmented from '../components/Segmented.tsx';
@@ -34,7 +35,7 @@ export default function ItemsPage() {
         else next.delete(key);
         return next;
       },
-      { replace: true },
+      { replace: true, preventScrollReset: true },
     );
   }
 
@@ -70,20 +71,19 @@ export default function ItemsPage() {
   return (
     <>
       <header className="page-head">
-        <p className="eyebrow">База предметов · TBC</p>
         <h1 className="page-title">Предметы</h1>
         <p className="page-sub">
-          {all.length} эпических предметов из {zones.length} рейдов TBC: названия, характеристики и иконки из базы Wowhead, списки
-          добычи по боссам — из AtlasLoot. Наведи на предмет, чтобы увидеть подсказку.
+          {all.length} эпических предметов из {zones.length} рейдов TBC. Названия, характеристики и иконки из базы Wowhead, списки добычи
+          по боссам из AtlasLoot. Наведи на предмет, чтобы увидеть подсказку.
         </p>
       </header>
 
       <div className="filters">
         <input
           id="items-search"
-          className="input"
+          className="input input--search"
           type="search"
-          placeholder="Название, можно по-английски"
+          placeholder="Название предмета"
           value={query}
           onChange={(e) => setParam('q', e.target.value)}
           aria-label="Поиск предмета"
@@ -120,7 +120,9 @@ export default function ItemsPage() {
           options={FOCUS_OPTIONS.map((f) => ({ value: f, label: f === 'all' ? 'Все' : FOCUS_LABEL[f] }))}
           onChange={(f) => setParam('for', f === 'all' ? '' : f)}
         />
-        <span className="muted small">Найдено: {filtered.length}</span>
+        <span className="muted small" aria-live="polite">
+          {filtered.length} {plural(filtered.length, 'предмет', 'предмета', 'предметов')}
+        </span>
       </div>
 
       {filtered.length === 0 ? (
@@ -135,7 +137,7 @@ export default function ItemsPage() {
                 <tr>
                   <th scope="col">Предмет</th>
                   <th scope="col" className="r">
-                    Ур.
+                    Уровень
                   </th>
                   <th scope="col">Слот</th>
                   <th scope="col">Главное</th>
@@ -151,7 +153,7 @@ export default function ItemsPage() {
                   return (
                     <tr key={item.id}>
                       <td className="cell-wrap">
-                        <ItemLink item={item} size={30} vt />
+                        <ItemLink item={item} size={32} vt />
                       </td>
                       <td className="r strong">{item.ilvl}</td>
                       <td className="muted">
@@ -167,9 +169,11 @@ export default function ItemsPage() {
                           ))}
                         </span>
                       </td>
-                      <td className="muted cell-wrap">
-                        {item.boss}
-                        {zoneName ? <span className="player__sub">{zoneTitle(zoneName).ru}</span> : null}
+                      <td className="cell-wrap">
+                        <span className="player__text">
+                          <span>{item.boss}</span>
+                          {zoneName ? <span className="player__sub">{zoneTitle(zoneName).ru}</span> : null}
+                        </span>
                       </td>
                       <td className="r muted">{wearers.get(item.id) ?? '—'}</td>
                     </tr>

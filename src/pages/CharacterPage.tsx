@@ -3,12 +3,14 @@ import { Link, useParams } from 'react-router';
 import { useCharacters, useItems, useMeta } from '../data/api.ts';
 import { FACTION_LABEL, GEAR_ALL, RACE_LABEL, ROLE_STATS, STAT_LABEL, characterFocus, sumStats } from '../data/items.ts';
 import { ROLE_LABEL, specInfo, zoneTitle } from '../data/specs.ts';
-import { formatNumber } from '../lib/format.ts';
+import { formatIlvl, formatNumber } from '../lib/format.ts';
 import { cssVars, link, usePageTitle } from '../lib/helpers.ts';
+import BackLink from '../components/BackLink.tsx';
 import PaperDoll from '../components/PaperDoll.tsx';
 import SpecIcon from '../components/SpecIcon.tsx';
 import { EmptyState, ErrorState, Loading } from '../components/States.tsx';
 
+// Место окрашено в цвет качества предмета: 1 — легендарный, 2–3 — эпический, до 10 — редкий
 function rankClass(r: number) {
   if (r === 1) return 'rank rank--legendary';
   if (r <= 3) return 'rank rank--epic';
@@ -63,60 +65,83 @@ export default function CharacterPage() {
 
   return (
     <>
-      <nav className="crumbs" aria-label="Путь">
-        <Link to="/characters">Персонажи</Link>
-        <span aria-hidden="true">/</span>
-        <span>{c.name}</span>
-      </nav>
+      <BackLink to="/characters">Персонажи</BackLink>
 
-      <header className="char-hero" style={cssVars({ '--c': info.color })}>
-        <SpecIcon cls={c.cls} spec={c.spec} size={72} vt={`char-${c.id}`} />
-        <div className="char-hero__text">
-          <h1 className="char-hero__name">{c.name}</h1>
-          <p className="char-hero__line">
-            {c.level} ур. · {RACE_LABEL[c.race]} · {info.name}, {info.clsName.toLowerCase()} · {ROLE_LABEL[info.role].toLowerCase()}
+      <header className="hero">
+        <SpecIcon cls={c.cls} spec={c.spec} size={96} vt={`char-${c.id}`} />
+        <div className="hero__text">
+          <h1 className="hero__title">{c.name}</h1>
+          <p className="hero__sub">
+            {info.name}, {info.clsName.toLowerCase()}. {RACE_LABEL[c.race]}, {c.level}-й уровень.
           </p>
-          <p className="char-hero__tags">
-            <span className={`tag tag--${c.faction}`}>{FACTION_LABEL[c.faction]}</span>
-            <span className="tag">&lt;{c.guild}&gt;</span>
-            <span className="tag">
-              {c.realm} · {c.region}
-            </span>
-            <span className="tag tag--demo">демо-персонаж</span>
-          </p>
-        </div>
-        <div className="char-hero__ilvl">
-          <strong>{c.ilvl.toFixed(1)}</strong>
-          <span>средний уровень предметов</span>
         </div>
       </header>
 
-      <div style={cssVars({ '--c': info.color })}>
-      <PaperDoll character={c} items={byId}>
-        <div className="doll-stats">
-          <h2>Характеристики</h2>
-          <p className="doll-stats__hint">Сумма с надетых предметов, без талантов и баффов</p>
-          <dl>
-            {ROLE_STATS[focus].map((key) => (
-              <div key={key}>
-                <dt>{STAT_LABEL[key] ?? 'Броня'}</dt>
-                <dd>{formatNumber(totals[key] ?? 0)}</dd>
-              </div>
-            ))}
-            <div>
-              <dt>Гнёзд для самоцветов</dt>
-              <dd>{sockets}</dd>
-            </div>
-          </dl>
-          <p className="doll-stats__hint">Наведи на предмет, чтобы увидеть подсказку. Нажми, чтобы открыть его страницу.</p>
+      <dl className="facts">
+        <div>
+          <dt>Уровень предметов</dt>
+          <dd>{formatIlvl(c.ilvl)}</dd>
         </div>
-      </PaperDoll>
-      </div>
+        <div>
+          <dt>Гильдия</dt>
+          <dd>{c.guild}</dd>
+        </div>
+        <div>
+          <dt>Сервер</dt>
+          <dd>
+            {c.realm}, {c.region}
+          </dd>
+        </div>
+        <div>
+          <dt>Фракция</dt>
+          <dd>{FACTION_LABEL[c.faction]}</dd>
+        </div>
+        <div>
+          <dt>Роль</dt>
+          <dd>{ROLE_LABEL[info.role]}</dd>
+        </div>
+      </dl>
 
-      <section className="block" aria-labelledby="results">
-        <div className="block__head">
-          <h2 id="results">Результаты в рейдах</h2>
-          <p>Место среди игроков роли «{ROLE_LABEL[info.role].toLowerCase()}» на каждом боссе</p>
+      <section className="section" aria-labelledby="gear">
+        <div className="section__head">
+          <div>
+            <h2 id="gear" className="section__title">
+              Экипировка
+            </h2>
+            <p className="section__sub">Наведи на предмет, чтобы увидеть подсказку. Нажми, чтобы открыть его страницу.</p>
+          </div>
+          <Link className="btn" to="/planner" viewTransition>
+            Собрать свой комплект
+          </Link>
+        </div>
+        <PaperDoll character={c} items={byId}>
+          <div className="doll-stats">
+            <h3>Характеристики</h3>
+            <p className="doll-stats__hint">Сумма с надетых предметов, без талантов и баффов</p>
+            <dl>
+              {ROLE_STATS[focus].map((key) => (
+                <div key={key}>
+                  <dt>{STAT_LABEL[key] ?? 'Броня'}</dt>
+                  <dd>{formatNumber(totals[key] ?? 0)}</dd>
+                </div>
+              ))}
+              <div>
+                <dt>Гнёзд для самоцветов</dt>
+                <dd>{sockets}</dd>
+              </div>
+            </dl>
+          </div>
+        </PaperDoll>
+      </section>
+
+      <section className="section" aria-labelledby="results">
+        <div className="section__head">
+          <div>
+            <h2 id="results" className="section__title">
+              Результаты в рейдах
+            </h2>
+            <p className="section__sub">Место среди игроков роли «{ROLE_LABEL[info.role].toLowerCase()}» на каждом боссе.</p>
+          </div>
         </div>
         {results.length === 0 ? (
           <EmptyState title="Пока нет результатов" />
@@ -148,18 +173,20 @@ export default function CharacterPage() {
                     return (
                       <tr key={enc.id}>
                         <td>
-                          <Link to={link(`/raid/${zone.id}/boss/${enc.id}`, { role: info.role })}>{enc.name}</Link>
+                          <Link to={link(`/raid/${zone.id}/boss/${enc.id}`, { role: info.role })} viewTransition>
+                            {enc.name}
+                          </Link>
                         </td>
                         <td className="r strong">{formatNumber(p.a)}</td>
                         <td className={`r ${rankClass(p.r)}`}>
                           {p.r} из {p.n}
                         </td>
                         <td>
-                          <span className="mini" style={cssVars({ '--c': info.color, '--w': `${Math.round(better * 100)}%` })}>
+                          <span className="mini" style={cssVars({ '--w': `${Math.round(better * 100)}%` })}>
                             <span className="mini__track" aria-hidden="true">
                               <span className="mini__fill" />
                             </span>
-                            <span className="mini__value">{Math.round(better * 100)}%</span>
+                            <span className="mini__value">{Math.round(better * 100)}% игроков</span>
                           </span>
                         </td>
                       </tr>

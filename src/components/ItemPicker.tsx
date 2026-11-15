@@ -4,6 +4,7 @@ import type { GearSlot, Item } from '../data/types.ts';
 import { fitsSlot } from '../planner/plan.ts';
 import ItemIcon from './ItemIcon.tsx';
 import ItemTooltip from './ItemTooltip.tsx';
+import { CloseIcon } from './Icons.tsx';
 
 interface Props {
   slot: GearSlot;
@@ -22,6 +23,7 @@ const LIMIT = 120;
 
 // Окно выбора предмета на нативном <dialog>: браузер сам держит фокус внутри,
 // закрывает по Esc и делает страницу под окном недоступной для клавиатуры.
+// На компьютере это окно по центру, на телефоне — шторка снизу, как в iOS.
 export default function ItemPicker({ slot, items, byId, current, equipped, armorType, focus, onPick, onUnequip, onClose }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const [query, setQuery] = useState('');
@@ -63,19 +65,16 @@ export default function ItemPicker({ slot, items, byId, current, equipped, armor
     >
       <div className="picker__inner">
         <header className="picker__head">
-          <div>
-            <p className="eyebrow">{GEAR_LABEL[slot]}</p>
-            <h2 id="picker-title">Выбери предмет</h2>
-          </div>
+          <h2 id="picker-title">{GEAR_LABEL[slot]}</h2>
           <button type="button" className="picker__close" onClick={() => ref.current?.close()} aria-label="Закрыть">
-            ×
+            <CloseIcon />
           </button>
         </header>
 
         <div className="picker__filters">
           <input
             id="picker-search"
-            className="input"
+            className="input input--search"
             type="search"
             placeholder="Название, можно по-английски"
             value={query}
@@ -83,18 +82,18 @@ export default function ItemPicker({ slot, items, byId, current, equipped, armor
             aria-label="Поиск предмета"
             autoFocus
           />
-          <label className="check">
-            <input id="picker-only-spec" type="checkbox" checked={onlySpec} onChange={(e) => setOnlySpec(e.target.checked)} />
+          <label className="switch">
+            <input id="picker-only-spec" type="checkbox" role="switch" checked={onlySpec} onChange={(e) => setOnlySpec(e.target.checked)} />
             Под этот спек
           </label>
           {armorSlot && (
-            <label className="check">
-              <input id="picker-only-armor" type="checkbox" checked={onlyArmor} onChange={(e) => setOnlyArmor(e.target.checked)} />
+            <label className="switch">
+              <input id="picker-only-armor" type="checkbox" role="switch" checked={onlyArmor} onChange={(e) => setOnlyArmor(e.target.checked)} />
               Только {armorLabel}
             </label>
           )}
           {current !== null && (
-            <button type="button" className="btn btn--ghost" onClick={onUnequip}>
+            <button type="button" className="btn btn--plain btn--danger" onClick={onUnequip}>
               Снять предмет
             </button>
           )}
@@ -104,6 +103,7 @@ export default function ItemPicker({ slot, items, byId, current, equipped, armor
           <ul className="picker__list" aria-label="Предметы">
             {shown.map((item) => {
               const taken = item.unique && equipped.has(item.id) && item.id !== current;
+              const note = taken ? 'уже надет' : item.id === current ? 'надет сейчас' : null;
               return (
                 <li key={item.id}>
                   <button
@@ -115,12 +115,12 @@ export default function ItemPicker({ slot, items, byId, current, equipped, armor
                     onFocus={() => setPreview(item)}
                     onClick={() => onPick(item)}
                   >
-                    <ItemIcon item={item} size={32} eager />
+                    <ItemIcon item={item} size={36} eager />
                     <span className="picker__text">
                       <span className="picker__name">{item.name}</span>
                       <span className="picker__meta">
-                        {item.ilvl} · {item.typeRu ?? item.slotRu}
-                        {taken ? ' · уже надет' : item.id === current ? ' · надет сейчас' : ''}
+                        {item.typeRu ?? item.slotRu}, уровень {item.ilvl}
+                        {note ? `, ${note}` : ''}
                       </span>
                     </span>
                     <span className="badges">
@@ -134,8 +134,12 @@ export default function ItemPicker({ slot, items, byId, current, equipped, armor
                 </li>
               );
             })}
-            {list.length === 0 && <li className="picker__empty">Ничего не нашлось. Сними галочки фильтров.</li>}
-            {list.length > LIMIT && <li className="picker__empty">Показаны первые {LIMIT} из {list.length}. Уточни поиск.</li>}
+            {list.length === 0 && <li className="picker__empty">Ничего не нашлось. Выключи фильтры над списком.</li>}
+            {list.length > LIMIT && (
+              <li className="picker__empty">
+                Показаны первые {LIMIT} из {list.length}. Уточни поиск.
+              </li>
+            )}
           </ul>
           <aside className="picker__preview" aria-label="Подсказка выбранного предмета">
             {previewItem && <ItemTooltip item={previewItem} />}

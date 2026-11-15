@@ -23,13 +23,13 @@ export default function PaperDoll({ character, items, children }: Props) {
     <div className="doll">
       <div className="doll__col">
         {GEAR_LEFT.map((slot) => (
-          <GearSlotView key={slot} slot={slot} item={itemIn(slot)} side="left" />
+          <GearSlotView key={slot} slot={slot} item={itemIn(slot)} />
         ))}
       </div>
       <div className="doll__center">{children}</div>
       <div className="doll__col doll__col--right">
         {GEAR_RIGHT.map((slot) => (
-          <GearSlotView key={slot} slot={slot} item={itemIn(slot)} side="right" />
+          <GearSlotView key={slot} slot={slot} item={itemIn(slot)} />
         ))}
       </div>
       <div className="doll__weapons">
@@ -38,7 +38,6 @@ export default function PaperDoll({ character, items, children }: Props) {
             key={slot}
             slot={slot}
             item={itemIn(slot)}
-            side="left"
             emptyNote={slot === 'offhand' && twoHanded ? 'Занята двуручным оружием' : undefined}
           />
         ))}
@@ -50,17 +49,15 @@ export default function PaperDoll({ character, items, children }: Props) {
 interface SlotProps {
   slot: GearSlot;
   item: Item | undefined;
-  side: 'left' | 'right';
   emptyNote?: string;
 }
 
-function GearSlotView({ slot, item, side, emptyNote }: SlotProps) {
+function GearSlotView({ slot, item, emptyNote }: SlotProps) {
   const hover = useHoverTrigger(item ? { kind: 'item', id: item.id } : null);
-  const sideClass = side === 'right' ? 'gear gear--right' : 'gear';
 
   if (!item) {
     return (
-      <div className={`${sideClass} is-empty`}>
+      <div className="gear is-empty">
         <span className="gear__blank" aria-hidden="true" />
         <span className="gear__text">
           <span className="gear__name">{emptyNote ?? 'Пусто'}</span>
@@ -71,13 +68,14 @@ function GearSlotView({ slot, item, side, emptyNote }: SlotProps) {
   }
 
   return (
-    <Link to={`/item/${item.id}`} className={sideClass} data-q={item.q} {...hover}>
-      <ItemIcon item={item} size={42} />
+    <Link to={`/item/${item.id}`} className="gear" data-q={item.q} viewTransition {...hover}>
+      <ItemIcon item={item} size={40} />
       <span className="gear__text">
         <span className="gear__name">{item.name}</span>
-        <span className="gear__meta">
-          {GEAR_LABEL[slot]} · {item.ilvl}
-        </span>
+        <span className="gear__meta">{GEAR_LABEL[slot]}</span>
+      </span>
+      <span className="gear__ilvl" title="Уровень предмета">
+        {item.ilvl}
       </span>
     </Link>
   );
