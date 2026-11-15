@@ -16,6 +16,18 @@ const queryClient = new QueryClient({
 // Data router: даёт ленивые маршруты, View Transitions и восстановление прокрутки
 const router = createBrowserRouter(routes, { basename: import.meta.env.BASE_URL.replace(/\/$/, '') });
 
+// Новая версия сайта приходит через service worker: он скачивает её в фоне и берёт страницу под контроль.
+// В этот момент один раз перезагружаемся, иначе человек увидел бы обновление только при следующем заходе.
+// Если контроллера не было (первый визит), перезагружать нечего.
+if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloading) return;
+    reloading = true;
+    window.location.reload();
+  });
+}
+
 const root = document.getElementById('root');
 if (!root) throw new Error('В index.html нет элемента #root');
 
