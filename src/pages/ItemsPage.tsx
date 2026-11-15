@@ -6,7 +6,10 @@ import { zoneTitle } from '../data/specs.ts';
 import type { ItemSlot } from '../data/types.ts';
 import { plural } from '../lib/format.ts';
 import { usePageTitle } from '../lib/helpers.ts';
+import { PAGE_ICON } from '../data/art.ts';
+import GameIcon from '../components/GameIcon.tsx';
 import ItemLink from '../components/ItemLink.tsx';
+import PageHero from '../components/PageHero.tsx';
 import Segmented from '../components/Segmented.tsx';
 import { EmptyState, ErrorState, Loading } from '../components/States.tsx';
 
@@ -70,13 +73,17 @@ export default function ItemsPage() {
 
   return (
     <>
-      <header className="page-head">
-        <h1 className="page-title">Предметы</h1>
-        <p className="page-sub">
-          {all.length} эпических предметов из {zones.length} рейдов TBC. Названия, характеристики и иконки из базы Wowhead, списки добычи
-          по боссам из AtlasLoot. Наведи на предмет, чтобы увидеть подсказку.
+      <PageHero
+        icon={<GameIcon icon={PAGE_ICON.items} size={64} letter="П" eager />}
+        art={PAGE_ICON.items}
+        title="База предметов TBC"
+        chips={[`${all.length} предметов`, `${zones.length} рейдов`, 'Wowhead', 'AtlasLoot']}
+      >
+        <p>
+          Эпические предметы из рейдов TBC: названия, характеристики и иконки из базы Wowhead, списки добычи по боссам из AtlasLoot. Наведи
+          на предмет, чтобы увидеть подсказку.
         </p>
-      </header>
+      </PageHero>
 
       <div className="filters">
         <input
@@ -113,18 +120,24 @@ export default function ItemsPage() {
           ))}
         </select>
       </div>
-      <div className="toolbar">
+      <div className="controls">
         <Segmented
           label="Для кого"
           value={focus}
           options={FOCUS_OPTIONS.map((f) => ({ value: f, label: f === 'all' ? 'Все' : FOCUS_LABEL[f] }))}
           onChange={(f) => setParam('for', f === 'all' ? '' : f)}
         />
-        <span className="muted small" aria-live="polite">
-          {filtered.length} {plural(filtered.length, 'предмет', 'предмета', 'предметов')}
-        </span>
       </div>
 
+      <section className="panel">
+        <div className="panel__head">
+          <div>
+            <h2 className="panel__title">Предметы</h2>
+            <p className="panel__sub" aria-live="polite">
+              Найдено: <span className="num">{filtered.length} {plural(filtered.length, 'предмет', 'предмета', 'предметов')}</span>
+            </p>
+          </div>
+        </div>
       {filtered.length === 0 ? (
         <EmptyState title="Ничего не нашлось">
           <p>Попробуй убрать часть фильтров.</p>
@@ -153,7 +166,7 @@ export default function ItemsPage() {
                   return (
                     <tr key={item.id}>
                       <td className="cell-wrap">
-                        <ItemLink item={item} size={32} vt />
+                        <ItemLink item={item} size={22} vt />
                       </td>
                       <td className="r strong">{item.ilvl}</td>
                       <td className="muted">
@@ -191,6 +204,7 @@ export default function ItemsPage() {
           )}
         </>
       )}
+      </section>
     </>
   );
 }

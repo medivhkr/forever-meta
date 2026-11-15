@@ -2,13 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, ScrollRestoration, useLocation } from 'react-router';
 import { useMeta } from '../data/api.ts';
 import { formatDateTime } from '../lib/format.ts';
-import { cssVars } from '../lib/helpers.ts';
 import { useOnline } from '../lib/useOnline.ts';
 import { preload, preloadWhenIdle, type PageName } from '../lib/pages.ts';
 import BrandMark from './BrandMark.tsx';
+import GameIcon from './GameIcon.tsx';
 import InstallButton from './InstallButton.tsx';
 import SearchPanel from './SearchPanel.tsx';
-import ThemeSwitch from './ThemeSwitch.tsx';
 import { SearchIcon } from './Icons.tsx';
 
 const NAV: { to: string; label: string; page?: PageName; match: (path: string) => boolean }[] = [
@@ -16,7 +15,6 @@ const NAV: { to: string; label: string; page?: PageName; match: (path: string) =
   { to: '/characters', label: 'Персонажи', page: 'characters', match: (p) => p.startsWith('/character') },
   { to: '/items', label: 'Предметы', page: 'items', match: (p) => p.startsWith('/item') },
   { to: '/planner', label: 'Конструктор', page: 'planner', match: (p) => p.startsWith('/planner') },
-  { to: '/forever', label: 'Forever', page: 'forever', match: (p) => p.startsWith('/forever') },
   { to: '/about', label: 'О проекте', page: 'about', match: (p) => p.startsWith('/about') },
 ];
 
@@ -32,64 +30,69 @@ export default function Layout() {
   const [searchAt, setSearchAt] = useState<string | null>(null);
   const menuOpen = menuAt === pathname;
   const searchOpen = searchAt === pathname;
+  const forever = pathname.startsWith('/forever');
 
   // Когда браузер освободится, заранее скачиваем код остальных страниц
   useEffect(() => {
     preloadWhenIdle();
   }, []);
 
-  // Пока открыто меню на телефоне, страница под ним не прокручивается; Esc закрывает меню
+  // Esc закрывает меню на телефоне
   useEffect(() => {
     if (!menuOpen) return;
-    const root = document.documentElement;
-    root.classList.add('is-locked');
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setMenuAt(null);
     };
     window.addEventListener('keydown', onKey);
-    return () => {
-      root.classList.remove('is-locked');
-      window.removeEventListener('keydown', onKey);
-    };
+    return () => window.removeEventListener('keydown', onKey);
   }, [menuOpen]);
 
   const intent = (page?: PageName) => (page ? () => preload(page) : undefined);
 
   return (
     <div className="shell">
-      <header className={menuOpen ? 'gnav is-open' : 'gnav'}>
-        <div className="gnav__bar container">
+      <header className="site-head">
+        <div className="topbar">
           <Link to="/" className="brand" aria-label="Forever Meta, на главную" viewTransition>
             <BrandMark className="brand__mark" />
             <span className="brand__name">Forever Meta</span>
           </Link>
-
-          <nav className="gnav__links" aria-label="Разделы">
-            {NAV.map((item) => {
-              const current = item.match(pathname);
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  viewTransition
-                  aria-current={current ? 'page' : undefined}
-                  // Наведение — сигнал, что сейчас кликнут: начинаем качать код страницы заранее
-                  onMouseEnter={intent(item.page)}
-                  onFocus={intent(item.page)}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
+          <nav className="versions" aria-label="Версия игры">
+            <Link to="/" className="version" aria-current={forever ? undefined : 'page'} viewTransition>
+              <GameIcon icon="spell_arcane_portalshattrath" size={16} letter="T" eager />
+              TBC Anniversary
+            </Link>
+            <Link to="/forever" className="version" aria-current={forever ? 'page' : undefined} viewTransition onMouseEnter={intent('forever')}>
+              <GameIcon icon="inv_misc_head_dragon_black" size={16} letter="F" eager />
+              WoW Forever
+              <span className="version__soon">рейды 9 дек</span>
+            </Link>
           </nav>
+        </div>
 
-          <div className="gnav__tools">
+        <div className="navbar">
+          <nav className="navbar__links" aria-label="Разделы">
+            {NAV.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                viewTransition
+                aria-current={item.match(pathname) ? 'page' : undefined}
+                // Наведение — сигнал, что сейчас кликнут: начинаем качать код страницы заранее
+                onMouseEnter={intent(item.page)}
+                onFocus={intent(item.page)}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="navbar__tools">
             <InstallButton />
             <button
               ref={searchButton}
               type="button"
-              className="gnav__btn"
-              aria-label="Поиск"
+              className="searchbtn"
+              aria-label="Поиск персонажей и предметов"
               aria-keyshortcuts="Control+K /"
               aria-expanded={searchOpen}
               onClick={() => {
@@ -97,14 +100,16 @@ export default function Layout() {
                 setSearchAt(searchOpen ? null : pathname);
               }}
             >
-              <SearchIcon />
+              <SearchIcon className="searchbtn__icon" />
+              <span className="searchbtn__text">Персонаж или предмет</span>
+              <kbd>Ctrl K</kbd>
             </button>
             <button
               type="button"
-              className="gnav__btn gnav__burger"
+              className="burger"
               aria-label={menuOpen ? 'Закрыть меню' : 'Меню'}
               aria-expanded={menuOpen}
-              aria-controls="gnav-menu"
+              aria-controls="site-menu"
               onClick={() => {
                 setSearchAt(null);
                 setMenuAt(menuOpen ? null : pathname);
@@ -112,26 +117,18 @@ export default function Layout() {
             >
               <span />
               <span />
+              <span />
             </button>
           </div>
         </div>
 
         {menuOpen && (
-          <nav id="gnav-menu" className="gnav__menu" aria-label="Разделы">
-            <ul className="container">
-              {NAV.map((item, i) => (
-                <li key={item.to} style={cssVars({ '--i': i })}>
-                  <Link
-                    to={item.to}
-                    viewTransition
-                    aria-current={item.match(pathname) ? 'page' : undefined}
-                    onClick={() => setMenuAt(null)}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          <nav id="site-menu" className="menu" aria-label="Разделы">
+            {[...NAV, { to: '/forever', label: 'WoW Forever', match: (p: string) => p.startsWith('/forever') }].map((item) => (
+              <Link key={item.to} to={item.to} viewTransition aria-current={item.match(pathname) ? 'page' : undefined} onClick={() => setMenuAt(null)}>
+                {item.label}
+              </Link>
+            ))}
           </nav>
         )}
       </header>
@@ -148,58 +145,49 @@ export default function Layout() {
         }}
       />
 
-      {!online && (
-        <div className="ribbon ribbon--offline" role="status">
-          <p className="container">Нет сети. Показываю сохранённые данные: всё, что ты уже открывал, работает без интернета.</p>
-        </div>
-      )}
-      {meta?.demo && (
-        <div className="ribbon" role="status">
-          <p className="container">
-            Рейтинги и персонажи пока демо: ключ Warcraft Logs ещё не подключён. Предметы настоящие, из Wowhead.{' '}
-            <Link to="/about">Как устроен сайт</Link>
+      <main className="page">
+        {!online && (
+          <p className="notice notice--offline" role="status">
+            <strong>Нет сети.</strong> Показываю сохранённые данные: всё, что ты уже открывал, работает без интернета.
           </p>
-        </div>
-      )}
-      {meta?.partial && (
-        <div className="ribbon" role="status">
-          <p className="container">
+        )}
+        {meta?.demo && (
+          <p className="notice" role="status">
+            <strong>Демо-данные.</strong> Рейтинги и персонажи — пример, пока не подключён ключ Warcraft Logs. Предметы настоящие, из базы
+            Wowhead. <Link to="/about">Подробнее</Link>
+          </p>
+        )}
+        {meta?.partial && (
+          <p className="notice" role="status">
             Собраны не все рейды: сборщик упёрся в лимит API Warcraft Logs. Остальное подтянется при следующем обновлении.
           </p>
-        </div>
-      )}
-
-      <main className="page container">
+        )}
         <Outlet />
       </main>
 
       <footer className="footer">
-        <div className="container">
-          <p className="footer__note">
-            Forever Meta — фан-проект, не связан с Blizzard Entertainment. World of Warcraft — товарный знак Blizzard Entertainment.
-          </p>
-          <div className="footer__row">
-            <p>
-              Данные:{' '}
-              <a href={meta?.site ?? 'https://www.warcraftlogs.com'} target="_blank" rel="noreferrer">
-                Warcraft Logs
-              </a>
-              ,{' '}
-              <a href="https://www.wowhead.com/tbc/ru" target="_blank" rel="noreferrer">
-                Wowhead
-              </a>{' '}
-              и{' '}
-              <a href="https://github.com/Hoizame/AtlasLootClassic" target="_blank" rel="noreferrer">
-                AtlasLoot
-              </a>
-              .{meta ? ` ${meta.gameVersion}, обновлено ${formatDateTime(meta.generatedAt)}.` : ''}{' '}
-              <a href="https://github.com/medivhkr/forever-meta" target="_blank" rel="noreferrer">
-                Исходный код
-              </a>
-            </p>
-            <ThemeSwitch />
-          </div>
+        <div className="footer__row">
+          <span className="footer__brand">
+            <BrandMark className="footer__mark" />© 2026 Forever Meta
+          </span>
+          <a href="https://github.com/medivhkr/forever-meta" target="_blank" rel="noreferrer">
+            GitHub
+          </a>
+          <a href={meta?.site ?? 'https://www.warcraftlogs.com'} target="_blank" rel="noreferrer">
+            Warcraft Logs
+          </a>
+          <a href="https://www.wowhead.com/tbc/ru" target="_blank" rel="noreferrer">
+            Wowhead
+          </a>
+          <a href="https://github.com/Hoizame/AtlasLootClassic" target="_blank" rel="noreferrer">
+            AtlasLoot
+          </a>
+          <Link to="/about">О проекте</Link>
         </div>
+        <p className="footer__note">
+          Фан-проект, не связан с Blizzard Entertainment. World of Warcraft — товарный знак Blizzard Entertainment.
+          {meta ? ` Данные: ${meta.gameVersion}, обновлено ${formatDateTime(meta.generatedAt)}.` : ''}
+        </p>
       </footer>
 
       {/* Новая страница открывается сверху, «назад» возвращает на прежнее место прокрутки */}

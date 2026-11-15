@@ -1,12 +1,16 @@
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 import { useMeta, useZone, useItems } from '../data/api.ts';
+import { ROLE_ICON } from '../data/art.ts';
 import { ROLES, ROLE_LABEL, STATS, STAT_LABEL, zoneTitle } from '../data/specs.ts';
 import { STAT_SHORT, bossKey, keyStats } from '../data/items.ts';
 import { rankEncounter, topPlayers } from '../data/tiers.ts';
+import { formatDateTime } from '../lib/format.ts';
 import { link, usePageTitle, useViewParams } from '../lib/helpers.ts';
 import BackLink from '../components/BackLink.tsx';
+import GameIcon from '../components/GameIcon.tsx';
 import ItemLink from '../components/ItemLink.tsx';
+import PageHero from '../components/PageHero.tsx';
 import Segmented, { ThumbView, useThumb } from '../components/Segmented.tsx';
 import SpecBars from '../components/SpecBars.tsx';
 import PlayersTable from '../components/PlayersTable.tsx';
@@ -68,19 +72,19 @@ export default function BossPage() {
   const specHref = (cls: string, spec: string) => link(`/spec/${cls}/${spec}`, { stat, zone: zone.id });
 
   let panel: ReactNode;
-  let sub: string;
+  let head: { title: string; hint: string };
   if (tab === 'specs') {
-    sub = `${STAT_LABEL[stat].long} каждого спека, ${unit}.`;
-    panel = rows.length ? <SpecBars rows={rows} specHref={specHref} /> : <EmptyState title="По этой роли данных нет" />;
+    head = { title: `Спеки на боссе, ${unit}`, hint: `${STAT_LABEL[stat].long} каждого спека. Полоса — доля от лучшего спека.` };
+    panel = rows.length ? <SpecBars rows={rows} unit={unit} specHref={specHref} /> : <EmptyState title="По этой роли данных нет" />;
   } else if (tab === 'players') {
-    sub = `Лучшие ${unit} среди всех спеков роли «${ROLE_LABEL[role].toLowerCase()}». Наведи на имя, чтобы увидеть экипировку.`;
+    head = { title: 'Лучшие игроки', hint: `Лучшие ${unit} среди всех спеков роли «${ROLE_LABEL[role].toLowerCase()}». Наведи на имя, чтобы увидеть экипировку.` };
     panel = players.length ? (
       <PlayersTable players={players} site={meta.data.site} unit={unit} />
     ) : (
       <EmptyState title="По этой роли данных нет" />
     );
   } else {
-    sub = 'Эпические предметы, которые падают с этого босса. Данные Wowhead и AtlasLoot.';
+    head = { title: 'Добыча', hint: 'Эпические предметы, которые падают с этого босса. Данные Wowhead и AtlasLoot.' };
     panel = items.isPending ? (
       <Loading />
     ) : loot.length ? (
@@ -100,7 +104,7 @@ export default function BossPage() {
             {loot.map((item) => (
               <tr key={item.id}>
                 <td className="cell-wrap">
-                  <ItemLink item={item} size={32} vt />
+                  <ItemLink item={item} size={22} vt />
                 </td>
                 <td className="r strong">{item.ilvl}</td>
                 <td className="muted">
@@ -130,64 +134,77 @@ export default function BossPage() {
 
   return (
     <>
-      <BackLink to={link(`/raid/${zone.id}`, { role, stat })}>{title.ru}</BackLink>
+      <BackLink to={link(`/raid/${zone.id}`, { role, stat })}>Тир-лист: {title.ru}</BackLink>
 
-      <header className="page-head">
-        <h1 className="page-title">{encounter.name}</h1>
-        <p className="page-sub">
-          {title.ru}, босс {index + 1} из {zone.encounters.length}. {sub}
-        </p>
-      </header>
+      <PageHero
+        icon={<GameIcon icon={ROLE_ICON[role]} size={64} letter="B" eager />}
+        art={ROLE_ICON[role]}
+        title={encounter.name}
+        chips={[title.ru, `Босс ${index + 1} из ${zone.encounters.length}`, meta.data.gameVersion]}
+        meta={
+          <>
+            Обновлено: <b>{formatDateTime(meta.data.generatedAt)}</b>
+          </>
+        }
+      />
 
-      <div className="controls">
-        <div className="seg">
-          <div ref={tabsRef} className={thumb ? 'seg__group has-thumb' : 'seg__group'} role="tablist" aria-label="Вид">
-            <ThumbView thumb={thumb} />
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                role="tab"
-                id={`tab-${t.id}`}
-                aria-selected={tab === t.id}
-                aria-controls="boss-panel"
-                onClick={() => setTab(t.id)}
-              >
-                {t.label}
-                {t.id === 'loot' && loot.length > 0 && <span className="seg__count">{loot.length}</span>}
-              </button>
-            ))}
+      <div className="tabs-wrap">
+        <div ref={tabsRef} className={thumb ? 'tabs has-thumb' : 'tabs'} role="tablist" aria-label="Вид">
+          <ThumbView thumb={thumb} />
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              id={`tab-${t.id}`}
+              aria-selected={tab === t.id}
+              aria-controls="boss-panel"
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+              {t.id === 'loot' && loot.length > 0 && <span className="tabs__count">{loot.length}</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {tab !== 'loot' && (
+        <div className="controls">
+          <Segmented
+            label="Роль"
+            value={role}
+            options={ROLES.map((r) => ({
+              value: r,
+              label: ROLE_LABEL[r],
+              icon: <GameIcon icon={ROLE_ICON[r]} size={16} letter={ROLE_LABEL[r].charAt(0)} eager />,
+            }))}
+            onChange={(r) => update({ role: r })}
+          />
+          {tab === 'specs' && (
+            <Segmented
+              label="Метрика"
+              value={stat}
+              options={STATS.map((s) => ({ value: s, label: STAT_LABEL[s].short, hint: STAT_LABEL[s].long }))}
+              onChange={(s) => update({ stat: s })}
+            />
+          )}
+        </div>
+      )}
+
+      <section id="boss-panel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="panel">
+        <div className="panel__head">
+          <div>
+            <h2 className="panel__title">{head.title}</h2>
+            <p className="panel__hint">{head.hint}</p>
           </div>
         </div>
-
-        {tab !== 'loot' && (
-          <div className="controls__row">
-            <Segmented
-              label="Роль"
-              value={role}
-              options={ROLES.map((r) => ({ value: r, label: ROLE_LABEL[r] }))}
-              onChange={(r) => update({ role: r })}
-            />
-            {tab === 'specs' && (
-              <Segmented
-                label="Метрика"
-                value={stat}
-                options={STATS.map((s) => ({ value: s, label: STAT_LABEL[s].short, hint: STAT_LABEL[s].long }))}
-                onChange={(s) => update({ stat: s })}
-              />
-            )}
-          </div>
-        )}
-      </div>
-
-      <div id="boss-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
         {panel}
-      </div>
+      </section>
 
       <nav className="pager" aria-label="Другие боссы">
         {prev ? (
           <Link to={link(`/raid/${zone.id}/boss/${prev.id}`, { role, stat })} viewTransition>
-            <span className="pager__dir">Предыдущий босс</span>
+            <span className="pager__dir">← Предыдущий босс</span>
             {prev.name}
           </Link>
         ) : (
@@ -195,7 +212,7 @@ export default function BossPage() {
         )}
         {next && (
           <Link to={link(`/raid/${zone.id}/boss/${next.id}`, { role, stat })} className="pager__next" viewTransition>
-            <span className="pager__dir">Следующий босс</span>
+            <span className="pager__dir">Следующий босс →</span>
             {next.name}
           </Link>
         )}

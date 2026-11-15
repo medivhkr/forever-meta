@@ -1,6 +1,9 @@
 import { Link } from 'react-router';
+import { PAGE_ICON } from '../data/art.ts';
 import { plural } from '../lib/format.ts';
 import { usePageTitle } from '../lib/helpers.ts';
+import GameIcon from '../components/GameIcon.tsx';
+import PageHero from '../components/PageHero.tsx';
 
 // Дата открытия первых рейдов WoW Forever по анонсу Blizzard. Точное время не объявлено,
 // поэтому считаем только дни.
@@ -16,17 +19,20 @@ const STATUS = [
   {
     title: 'Логи рейдов',
     state: 'Ждём открытия',
+    tone: 'wait',
     text: 'Рейды закрыты до 9 декабря, поэтому рейдовых логов пока нет ни у кого.',
   },
   {
     title: 'Рейтинги Warcraft Logs',
     state: 'Частично',
+    tone: 'part',
     text: 'Warcraft Logs уже принимает логи подземелий Forever, но рейтингов по подземельям не будет. Рейтинги рейдов появятся после открытия.',
   },
   {
     title: 'API Blizzard',
     state: 'Без урона',
-    text: 'Урон и исцеление API Blizzard не отдаёт ни для одной версии игры. Для Forever сейчас доступен только профиль своего аккаунта, поиска чужих персонажей по имени пока нет.',
+    tone: 'no',
+    text: 'Урон и исцеление API Blizzard не отдаёт ни для одной версии игры. Для Forever доступен только профиль своего аккаунта.',
   },
 ];
 
@@ -36,51 +42,82 @@ export default function ForeverPage() {
 
   return (
     <>
-      <header className="page-head">
-        <h1 className="page-title">WoW Forever</h1>
-        <p className="page-sub">
-          World of Warcraft: Forever вышел 4 ноября 2026 года. Тир-лист Forever появится, как только Warcraft Logs начнёт ранжировать его
-          рейды. Интерфейс уже готов: сборщику достаточно указать сайт и рейды.
+      <PageHero
+        icon={<GameIcon icon={PAGE_ICON.forever} size={64} letter="F" eager />}
+        art={PAGE_ICON.forever}
+        title="Тир-лист WoW Forever"
+        chips={['Вышел 4 ноября 2026', 'Рейды с 9 декабря', 'Скоро']}
+      >
+        <p>
+          Тир-лист Forever появится, как только Warcraft Logs начнёт ранжировать его рейды. Интерфейс уже готов: сборщику достаточно указать
+          сайт и рейды. Пока что тир-лист работает на <Link to="/">TBC Anniversary</Link>.
         </p>
-      </header>
+      </PageHero>
 
-      <section className="countdown" aria-label="Открытие рейдов">
-        <p className="countdown__date">9 декабря</p>
-        <p className="countdown__text">
-          {daysLeft > 0
-            ? `Открываются первые рейды. Осталось ${daysLeft} ${plural(daysLeft, 'день', 'дня', 'дней')}.`
-            : 'Рейды открыты, ждём рейтинги Warcraft Logs.'}
-        </p>
-      </section>
-
-      <div className="specs">
-        <section className="specs__row">
-          <h2 className="specs__title">Первые рейды</h2>
-          <dl className="specs__body raid-list">
-            {RAIDS.map((raid) => (
-              <div key={raid.name}>
-                <dt lang="en">{raid.name}</dt>
-                <dd>{raid.size} игроков</dd>
-              </div>
-            ))}
-          </dl>
+      <div className="stack">
+        <section className="panel countdown">
+          <div className="countdown__num">{daysLeft > 0 ? daysLeft : 0}</div>
+          <div>
+            <p className="countdown__label">
+              {daysLeft > 0 ? `${plural(daysLeft, 'день', 'дня', 'дней')} до открытия рейдов` : 'Рейды открыты'}
+            </p>
+            <p className="panel__hint">Первые рейды WoW Forever откроются 9 декабря 2026 года.</p>
+          </div>
         </section>
 
-        <section className="specs__row">
-          <h2 className="specs__title">Откуда возьмутся данные</h2>
-          <div className="specs__body">
-            <ul className="columns">
-              {STATUS.map((item) => (
-                <li key={item.title}>
-                  <h3>{item.title}</h3>
-                  <p className="columns__state">{item.state}</p>
-                  <p>{item.text}</p>
-                </li>
-              ))}
-            </ul>
-            <p className="lines__more">
-              Пока Forever набирает логи, тир-лист работает на TBC Anniversary. <Link to="/">Открыть тир-лист</Link>
-            </p>
+        <section className="panel">
+          <div className="panel__head">
+            <h2 className="panel__title">Первые рейды</h2>
+          </div>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Рейд</th>
+                  <th scope="col" className="r">
+                    Игроков
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {RAIDS.map((raid) => (
+                  <tr key={raid.name}>
+                    <td className="strong" lang="en">
+                      {raid.name}
+                    </td>
+                    <td className="r">{raid.size}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="panel">
+          <div className="panel__head">
+            <h2 className="panel__title">Откуда возьмутся данные</h2>
+          </div>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Источник</th>
+                  <th scope="col">Статус</th>
+                  <th scope="col">Что известно</th>
+                </tr>
+              </thead>
+              <tbody>
+                {STATUS.map((item) => (
+                  <tr key={item.title}>
+                    <td className="strong">{item.title}</td>
+                    <td>
+                      <span className={`status status--${item.tone}`}>{item.state}</span>
+                    </td>
+                    <td className="cell-wrap muted">{item.text}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
       </div>

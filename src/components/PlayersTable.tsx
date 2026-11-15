@@ -1,7 +1,7 @@
 import type { PlayerRow } from '../data/tiers.ts';
 import { specInfo } from '../data/specs.ts';
 import { formatDate, formatDuration, formatNumber } from '../lib/format.ts';
-import { characterUrl, reportUrl } from '../lib/helpers.ts';
+import { characterUrl, cssVars, reportUrl } from '../lib/helpers.ts';
 import CharacterName from './CharacterName.tsx';
 import SpecIcon from './SpecIcon.tsx';
 
@@ -50,11 +50,11 @@ export default function PlayersTable({ players, site, unit }: Props) {
               <tr key={`${p.name}-${p.server}-${info.key}-${i}`}>
                 <td className={`r ${rankClass(i + 1)}`}>{i + 1}</td>
                 <td>
-                  <span className="player">
-                    <SpecIcon cls={p.cls} spec={p.spec} size={28} />
+                  <span className="player" style={cssVars({ '--c': info.color })}>
+                    <SpecIcon cls={p.cls} spec={p.spec} size={24} />
                     <span className="player__text">
                       {p.charId ? (
-                        <CharacterName id={p.charId} name={p.name} />
+                        <CharacterName id={p.charId} name={p.name} cls={p.cls} />
                       ) : wclLink ? (
                         <a className="player__name" href={characterUrl(site, p.region, p.server, p.name)} target="_blank" rel="noreferrer">
                           {p.name}

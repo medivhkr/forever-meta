@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useCharacters, useItems, useMeta } from '../data/api.ts';
+import { PAGE_ICON } from '../data/art.ts';
 import { FACTION_LABEL } from '../data/items.ts';
 import { ROLES, ROLE_LABEL, specInfo } from '../data/specs.ts';
 import type { Character, GearSlot, Item } from '../data/types.ts';
@@ -9,6 +10,7 @@ import { usePageTitle } from '../lib/helpers.ts';
 import CharacterName from '../components/CharacterName.tsx';
 import GameIcon from '../components/GameIcon.tsx';
 import ItemIcon from '../components/ItemIcon.tsx';
+import PageHero from '../components/PageHero.tsx';
 import Segmented from '../components/Segmented.tsx';
 import SpecIcon from '../components/SpecIcon.tsx';
 import { useHoverTrigger } from '../components/Hover.tsx';
@@ -65,13 +67,17 @@ export default function CharactersPage() {
 
   return (
     <>
-      <header className="page-head">
-        <h1 className="page-title">Персонажи</h1>
-        <p className="page-sub">
-          {list.length} героев TBC Anniversary в настоящей рейдовой экипировке. Имена, гильдии и результаты придуманы для примера.
-          Наведи на имя, чтобы увидеть, что надето.
+      <PageHero
+        icon={<GameIcon icon={PAGE_ICON.characters} size={64} letter="П" eager />}
+        art={PAGE_ICON.characters}
+        title="Персонажи"
+        chips={[`${list.length} персонажей`, 'TBC Anniversary', 'Демо']}
+      >
+        <p>
+          Герои в настоящей рейдовой экипировке из базы Wowhead. Имена, гильдии и результаты придуманы для примера. Наведи на имя, чтобы
+          увидеть, что надето.
         </p>
-      </header>
+      </PageHero>
 
       <div className="filters">
         <input
@@ -123,8 +129,17 @@ export default function CharactersPage() {
           <p>Попробуй убрать часть фильтров.</p>
         </EmptyState>
       ) : (
+        <section className="panel">
+        <div className="panel__head">
+          <div>
+            <h2 className="panel__title">Список персонажей</h2>
+            <p className="panel__sub">
+              Найдено: <span className="num">{filtered.length}</span>
+            </p>
+          </div>
+        </div>
         <div className="table-wrap">
-          <table className="table table--roomy">
+          <table className="table">
             <thead>
               <tr>
                 <th scope="col" className="r">
@@ -146,6 +161,7 @@ export default function CharactersPage() {
             </tbody>
           </table>
         </div>
+        </section>
       )}
     </>
   );
@@ -160,9 +176,9 @@ function CharacterRow({ c, index, items, bossName }: { c: Character; index: numb
       <td className="r muted">{index + 1}</td>
       <td>
         <span className="player">
-          <SpecIcon cls={c.cls} spec={c.spec} size={36} vt={`char-${c.id}`} />
+          <SpecIcon cls={c.cls} spec={c.spec} size={28} vt={`char-${c.id}`} />
           <span className="player__text">
-            <CharacterName id={c.id} name={c.name} />
+            <CharacterName id={c.id} name={c.name} cls={c.cls} />
             <span className="player__sub">
               {info.name}, {info.clsName.toLowerCase()}
             </span>
@@ -213,7 +229,7 @@ function StripIcon({ item }: { item: Item }) {
   const hover = useHoverTrigger({ kind: 'item', id: item.id });
   return (
     <Link to={`/item/${item.id}`} className="strip__item" aria-label={item.name} tabIndex={-1} viewTransition {...hover}>
-      <ItemIcon item={item} size={28} />
+      <ItemIcon item={item} size={26} />
     </Link>
   );
 }

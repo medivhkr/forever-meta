@@ -5,16 +5,16 @@ import { specInfo } from './specs.ts';
 // 1. На каждом боссе берём выбранную метрику спека (по умолчанию медиану 100 лучших парсов).
 // 2. Делим на значение лучшего спека этой роли на том же боссе — получаем долю от 0 до 1.
 // 3. Усредняем доли по всем боссам рейда. Это и есть оценка спека.
-// 4. Раскладываем по тирам. Цвета тиров — цвета качества предметов в игре.
+// 4. Раскладываем по тирам. Цвета — привычная шкала тир-листов: S красный, A оранжевый, B жёлтый, C зелёный, D синий.
 
 export type TierId = 'S' | 'A' | 'B' | 'C' | 'D';
 
 export const TIERS: { id: TierId; min: number; label: string; color: string }[] = [
-  { id: 'S', min: 0.97, label: 'легендарный', color: 'var(--q-legendary)' },
-  { id: 'A', min: 0.92, label: 'эпический', color: 'var(--q-epic)' },
-  { id: 'B', min: 0.85, label: 'редкий', color: 'var(--q-rare)' },
-  { id: 'C', min: 0.75, label: 'необычный', color: 'var(--q-uncommon)' },
-  { id: 'D', min: 0, label: 'обычный', color: 'var(--q-poor)' },
+  { id: 'S', min: 0.97, label: 'лучший', color: 'var(--tier-s)' },
+  { id: 'A', min: 0.92, label: 'сильный', color: 'var(--tier-a)' },
+  { id: 'B', min: 0.85, label: 'выше среднего', color: 'var(--tier-b)' },
+  { id: 'C', min: 0.75, label: 'средний', color: 'var(--tier-c)' },
+  { id: 'D', min: 0, label: 'слабый', color: 'var(--tier-d)' },
 ];
 
 // Спек с меньшим числом парсов на боссе в расчёт не берём: слишком шумно.

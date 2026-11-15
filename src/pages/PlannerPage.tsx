@@ -18,8 +18,11 @@ import type { GearSlot, Item } from '../data/types.ts';
 import { formatIlvl, formatNumber } from '../lib/format.ts';
 import { usePageTitle } from '../lib/helpers.ts';
 import { decodePlan, emptyGear, encodePlan, planReducer, statDelta, type PlanState } from '../planner/plan.ts';
+import { PAGE_ICON } from '../data/art.ts';
+import GameIcon from '../components/GameIcon.tsx';
 import ItemIcon from '../components/ItemIcon.tsx';
 import ItemPicker from '../components/ItemPicker.tsx';
+import PageHero from '../components/PageHero.tsx';
 import { useHoverTrigger } from '../components/Hover.tsx';
 import { ErrorState, Loading } from '../components/States.tsx';
 
@@ -120,15 +123,19 @@ export default function PlannerPage() {
 
   return (
     <>
-      <header className="page-head">
-        <h1 className="page-title">Конструктор</h1>
-        <p className="page-sub">
-          Собери комплект из {allItems.length} рейдовых предметов TBC и смотри, как меняются характеристики. Сборка хранится в адресе
-          страницы: отправь ссылку, и у друга откроется то же самое.
+      <PageHero
+        icon={<GameIcon icon={PAGE_ICON.planner} size={64} letter="К" eager />}
+        art={PAGE_ICON.planner}
+        title="Конструктор экипировки"
+        chips={[`${allItems.length} предметов`, 'TBC Anniversary', 'Ссылка на сборку']}
+      >
+        <p>
+          Собери комплект из рейдовых предметов TBC и смотри, как меняются характеристики. Сборка хранится в адресе страницы: отправь
+          ссылку, и у друга откроется то же самое.
         </p>
-      </header>
+      </PageHero>
 
-      <div className="planner-bar">
+      <div className="planner-bar panel">
         <label className="field">
           <span className="field__label">Спек</span>
           <select
@@ -192,6 +199,8 @@ export default function PlannerPage() {
         </div>
       </div>
 
+      <section className="panel" aria-label="Экипировка">
+      <div className="panel__body">
       <div className="doll">
         <div className="doll__col">{GEAR_LEFT.map(slotView)}</div>
         <div className="doll__center">
@@ -225,6 +234,8 @@ export default function PlannerPage() {
         <div className="doll__col doll__col--right">{GEAR_RIGHT.map(slotView)}</div>
         <div className="doll__weapons">{GEAR_WEAPONS.map(slotView)}</div>
       </div>
+      </div>
+      </section>
 
       {picking && (
         <ItemPicker

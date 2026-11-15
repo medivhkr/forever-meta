@@ -1,9 +1,10 @@
-import { useId, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { useId, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 
 interface Option<T extends string> {
   value: T;
   label: string;
   hint?: string;
+  icon?: ReactNode;
 }
 
 interface Props<T extends string> {
@@ -11,13 +12,13 @@ interface Props<T extends string> {
   value: T;
   options: Option<T>[];
   onChange: (value: T) => void;
-  size?: 'regular' | 'small';
+  variant?: 'buttons' | 'tabs'; // кнопки в рамке или вкладки с подчёркиванием
 }
 
 type Thumb = { x: number; w: number };
 
-// Белая плашка под выбранным вариантом, как в переключателях iOS. Меряем выбранный элемент
-// до отрисовки кадра (useLayoutEffect) и двигаем плашку к нему; CSS анимирует перемещение.
+// Подсветка выбранного варианта переезжает к нему, а не перепрыгивает. Меряем выбранный элемент
+// до отрисовки кадра (useLayoutEffect) и двигаем подсветку; CSS анимирует перемещение.
 export function useThumb(group: RefObject<HTMLElement | null>, selector: string, selected: unknown): Thumb | null {
   const [thumb, setThumb] = useState<Thumb | null>(null);
 
@@ -49,20 +50,22 @@ export function ThumbView({ thumb }: { thumb: Thumb | null }) {
 }
 
 // Переключатель из нескольких кнопок. Дженерик T, чтобы onChange получал точный тип значения.
-export default function Segmented<T extends string>({ label, value, options, onChange, size = 'regular' }: Props<T>) {
+export default function Segmented<T extends string>({ label, value, options, onChange, variant = 'buttons' }: Props<T>) {
   const id = useId();
   const group = useRef<HTMLDivElement>(null);
   const thumb = useThumb(group, '[aria-pressed="true"]', value);
+  const base = variant === 'tabs' ? 'tabs' : 'seg';
 
   return (
-    <div className={size === 'small' ? 'seg seg--small' : 'seg'}>
+    <div className={`${base}-wrap`}>
       <span className="sr-only" id={id}>
         {label}
       </span>
-      <div ref={group} className={thumb ? 'seg__group has-thumb' : 'seg__group'} role="group" aria-labelledby={id}>
+      <div ref={group} className={thumb ? `${base} has-thumb` : base} role="group" aria-labelledby={id}>
         <ThumbView thumb={thumb} />
         {options.map((o) => (
           <button key={o.value} type="button" aria-pressed={o.value === value} title={o.hint} onClick={() => onChange(o.value)}>
+            {o.icon}
             {o.label}
           </button>
         ))}
