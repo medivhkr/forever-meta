@@ -16,15 +16,17 @@ const queryClient = new QueryClient({
 // Data router: даёт ленивые маршруты, View Transitions и восстановление прокрутки
 const router = createBrowserRouter(routes, { basename: import.meta.env.BASE_URL.replace(/\/$/, '') });
 
-// Новая версия сайта приходит через service worker: он скачивает её в фоне и берёт страницу под контроль.
-// В этот момент один раз перезагружаемся, иначе человек увидел бы обновление только при следующем заходе.
-// Если контроллера не было (первый визит), перезагружать нечего.
-if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-  let reloading = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (reloading) return;
-    reloading = true;
-    window.location.reload();
+// Новая версия сайта приходит через service worker; после обновления он сам перезагружает открытые
+// вкладки (public/sw-extra.js). Но сайт одностраничный: переходы по разделам не идут на сервер, и
+// браузер не узнает о новой версии, пока вкладку не перезагрузят. Поэтому проверяем обновление
+// каждый раз, когда человек возвращается на вкладку.
+if ('serviceWorker' in navigator) {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    void navigator.serviceWorker
+      .getRegistration()
+      .then((registration) => registration?.update())
+      .catch(() => {});
   });
 }
 

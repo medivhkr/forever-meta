@@ -34,10 +34,15 @@ export default defineConfig({
       workbox: {
         // Код и стили — в предварительный кеш; JSON с данными — по сети, а без сети из кеша
         globPatterns: ['**/*.{js,css,html,svg,png}'],
+        globIgnores: ['sw-extra.js'],
         navigateFallback: 'index.html',
+        // После обновления перезагрузить открытые вкладки, чтобы не висела старая версия (public/sw-extra.js)
+        importScripts: ['sw-extra.js'],
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => url.pathname.startsWith(`${BASE}data/`),
+            // Регулярное выражение, а не функция с BASE: функции переносятся в service worker текстом,
+            // и переменной BASE там нет. Из-за этого раньше падала проверка маршрута и кеш не работал.
+            urlPattern: /\/forever-meta\/data\//,
             handler: 'NetworkFirst',
             options: { cacheName: 'fm-data', networkTimeoutSeconds: 4, matchOptions: { ignoreSearch: true } },
           },
