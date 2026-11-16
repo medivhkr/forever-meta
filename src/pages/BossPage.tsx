@@ -204,7 +204,7 @@ export default function BossPage() {
       <nav className="pager" aria-label="Другие боссы">
         {prev ? (
           <Link to={link(`/raid/${zone.id}/boss/${prev.id}`, { role, stat })} viewTransition>
-            <span className="pager__dir">← Предыдущий босс</span>
+            <span className="pager__dir">Предыдущий босс</span>
             {prev.name}
           </Link>
         ) : (
@@ -212,7 +212,7 @@ export default function BossPage() {
         )}
         {next && (
           <Link to={link(`/raid/${zone.id}/boss/${next.id}`, { role, stat })} className="pager__next" viewTransition>
-            <span className="pager__dir">Следующий босс →</span>
+            <span className="pager__dir">Следующий босс</span>
             {next.name}
           </Link>
         )}

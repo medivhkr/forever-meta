@@ -80,7 +80,6 @@ export default function CharacterPage() {
           `<${c.guild}>`,
           `${c.realm}, ${c.region}`,
           FACTION_LABEL[c.faction],
-          'Демо',
         ]}
         meta={
           <>

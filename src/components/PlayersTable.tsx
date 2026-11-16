@@ -79,7 +79,7 @@ export default function PlayersTable({ players, site, unit }: Props) {
                 <td>
                   {p.report ? (
                     <a href={reportUrl(site, p.report, p.fight)} target="_blank" rel="noreferrer" className="ext">
-                      лог ↗
+                      лог
                     </a>
                   ) : (
                     <span className="muted">—</span>

@@ -8,3 +8,4 @@ dist
 *.log
 scripts/.cache
 .claude/
+.hallmark/

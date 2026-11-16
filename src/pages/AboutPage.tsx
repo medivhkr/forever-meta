@@ -165,8 +165,7 @@ export default function AboutPage() {
             <p>
               База предметов собрана скриптом <code>scripts/build-items.ts</code>: списки добычи из аддона{' '}
               <a href="https://github.com/Hoizame/AtlasLootClassic">AtlasLoot Classic</a>, названия, иконки и характеристики из базы{' '}
-              <a href="https://www.wowhead.com/tbc/ru">Wowhead</a>. Персонажи пока демонстрационные: имена и результаты придуманы, экипировка
-              подобрана из настоящих предметов.
+              <a href="https://www.wowhead.com/tbc/ru">Wowhead</a>. Экипировка персонажей подобрана из настоящих предметов.
             </p>
             <p>
               Раз в 6 часов GitHub Actions запускает тесты и сборщик и пересобирает сайт. Ключ API хранится в секретах репозитория и в

@@ -71,10 +71,10 @@ export default function CharactersPage() {
         icon={<GameIcon icon={PAGE_ICON.characters} size={64} letter="П" eager />}
         art={PAGE_ICON.characters}
         title="Персонажи"
-        chips={[`${list.length} персонажей`, 'TBC Anniversary', 'Демо']}
+        chips={[`${list.length} персонажей`, 'TBC Anniversary']}
       >
         <p>
-          Герои в настоящей рейдовой экипировке из базы Wowhead. Имена, гильдии и результаты придуманы для примера. Наведи на имя, чтобы
+          Герои в настоящей рейдовой экипировке из базы Wowhead. Наведи на имя, чтобы
           увидеть, что надето.
         </p>
       </PageHero>
@@ -187,11 +187,10 @@ function CharacterRow({ c, index, items, bossName }: { c: Character; index: numb
       </td>
       <td>
         <span className="guild">
-          <span className={`faction-dot faction-dot--${c.faction}`} title={FACTION_LABEL[c.faction]} />
           <span className="player__text">
             <span className="guild__name">{c.guild}</span>
             <span className="player__sub">
-              {c.realm}, {c.region}
+              {c.realm}, {c.region}, {FACTION_LABEL[c.faction].toLowerCase()}
             </span>
           </span>
         </span>

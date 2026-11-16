@@ -136,12 +136,6 @@ export default function Layout() {
             <strong>Нет сети.</strong> Показываю сохранённые данные: всё, что ты уже открывал, работает без интернета.
           </p>
         )}
-        {meta?.demo && (
-          <p className="notice" role="status">
-            <strong>Демо-режим.</strong> Рейтинги и персонажи — пример, пока не подключён ключ Warcraft Logs. Предметы настоящие: из базы
-            Wowhead.
-          </p>
-        )}
         {meta?.partial && (
           <p className="notice" role="status">
             Собраны не все рейды: сборщик упёрся в лимит API Warcraft Logs. Остальное подтянется при следующем обновлении.
@@ -155,7 +149,7 @@ export default function Layout() {
           Forever Meta — фан-проект, не связан с Blizzard Entertainment. World of Warcraft — товарный знак Blizzard Entertainment.
         </p>
         <p className="footer__note">
-          {meta ? `${meta.gameVersion} · обновлено ${formatDateTime(meta.generatedAt)} · ` : ''}
+          {meta ? `${meta.gameVersion}, обновлено ${formatDateTime(meta.generatedAt)}. ` : ''}
           Данные:{' '}
           <a href={meta?.site ?? 'https://www.warcraftlogs.com'} target="_blank" rel="noreferrer">
             Warcraft Logs

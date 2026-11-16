@@ -89,7 +89,7 @@ export default function ItemPage() {
               Подсказка в игре
             </h2>
             <a className="link-more" href={wowheadUrl(item.id)} target="_blank" rel="noreferrer">
-              Открыть на Wowhead ↗
+              Открыть на Wowhead
             </a>
           </div>
           <div className="panel__body">
@@ -134,7 +134,7 @@ export default function ItemPage() {
             <div className="panel__head">
               <div>
                 <h2 className="panel__title">Кто носит</h2>
-                <p className="panel__hint">Демо-персонажи с этим предметом</p>
+                <p className="panel__hint">Персонажи с этим предметом</p>
               </div>
             </div>
             {wearers.length ? (
@@ -161,7 +161,7 @@ export default function ItemPage() {
                 </table>
               </div>
             ) : (
-              <p className="panel__body muted">Никто из демо-персонажей</p>
+              <p className="panel__body muted">Пока никто не носит</p>
             )}
           </section>
 

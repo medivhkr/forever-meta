@@ -2,9 +2,10 @@ import { useMemo, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 import { useCharacters, useItems, useMeta, usePrefetchZone, useZone } from '../data/api.ts';
 import { ROLE_ICON } from '../data/art.ts';
-import { ROLES, ROLE_LABEL, STATS, STAT_LABEL, zoneTitle } from '../data/specs.ts';
+import { ROLES, ROLE_LABEL, STATS, STAT_LABEL, specInfo, zoneTitle } from '../data/specs.ts';
 import { scoreZone } from '../data/tiers.ts';
-import { formatDateTime } from '../lib/format.ts';
+import { formatDateTime, formatPercent } from '../lib/format.ts';
+import SpecIcon from '../components/SpecIcon.tsx';
 import { link, usePageTitle, useViewParams } from '../lib/helpers.ts';
 import GameIcon from '../components/GameIcon.tsx';
 import PageHero from '../components/PageHero.tsx';
@@ -62,6 +63,7 @@ export default function TierPage() {
     );
   } else {
     const specHref = (s: { cls: string; spec: string }) => link(`/spec/${s.cls}/${s.spec}`, { stat, zone: zone.id });
+    const leader = scores.find((s) => !s.sparse);
     body = (
       <div className="stack">
         <section className="panel" aria-labelledby="tier-title">
@@ -70,6 +72,20 @@ export default function TierPage() {
               Тир-лист
             </h2>
           </div>
+          {leader && (
+            <Link to={specHref(leader)} className="reading" viewTransition>
+              <span className="reading__value">{formatPercent(leader.score)}</span>
+              <span className="reading__who">
+                <SpecIcon cls={leader.cls} spec={leader.spec} size={40} />
+                <span>
+                  <span className="reading__name">
+                    {specInfo(leader.cls, leader.spec).name}, {specInfo(leader.cls, leader.spec).clsName.toLowerCase()}
+                  </span>
+                  <span className="reading__meta"> лучший спек рейда, в среднем от лучшего на {leader.bosses} боссах</span>
+                </span>
+              </span>
+            </Link>
+          )}
           <TierBoard scores={scores} specHref={specHref} />
         </section>
 
