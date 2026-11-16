@@ -12,5 +12,4 @@ export const PAGE_ICON = {
   items: 'inv_misc_bag_10_blue',
   planner: 'inv_chest_plate16',
   forever: 'inv_misc_head_dragon_black',
-  about: 'inv_misc_book_11',
 } as const;

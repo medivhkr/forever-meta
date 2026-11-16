@@ -14,7 +14,6 @@ const NAV: { to: string; label: string; page?: PageName; match: (path: string) =
   { to: '/items', label: 'Предметы', page: 'items', match: (p) => p.startsWith('/item') },
   { to: '/planner', label: 'Конструктор', page: 'planner', match: (p) => p.startsWith('/planner') },
   { to: '/forever', label: 'Forever', page: 'forever', match: (p) => p.startsWith('/forever') },
-  { to: '/about', label: 'О проекте', page: 'about', match: (p) => p.startsWith('/about') },
 ];
 
 export default function Layout() {

@@ -10,7 +10,6 @@ export const pages = {
   item: () => import('../pages/ItemPage.tsx'),
   planner: () => import('../pages/PlannerPage.tsx'),
   forever: () => import('../pages/ForeverPage.tsx'),
-  about: () => import('../pages/AboutPage.tsx'),
 };
 
 export type PageName = keyof typeof pages;

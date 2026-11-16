@@ -36,7 +36,6 @@ export const routes: RouteObject[] = [
           { path: 'item/:id', lazy: lazyPage(pages.item) },
           { path: 'planner', lazy: lazyPage(pages.planner) },
           { path: 'forever', lazy: lazyPage(pages.forever) },
-          { path: 'about', lazy: lazyPage(pages.about) },
           { path: '*', element: <NotFound /> },
         ],
       },
