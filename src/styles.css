@@ -2761,7 +2761,16 @@ button.gear:disabled {
   }
 
   .brand__name {
+    font-size: var(--text-sm);
+  }
+
+  .searchbtn__text {
     display: none;
+  }
+
+  .searchbtn {
+    flex: 0 0 auto;
+    margin-left: auto;
   }
 
   .navbar {
@@ -3005,6 +3014,12 @@ button.gear:active:not(:disabled),
   display: flex;
   max-width: 100%;
   min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.switch-row::-webkit-scrollbar {
+  display: none;
 }
 
 .switch-row--scroll {
