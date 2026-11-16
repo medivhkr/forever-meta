@@ -4,7 +4,6 @@ import { useMeta } from '../data/api.ts';
 import { formatDateTime } from '../lib/format.ts';
 import { useOnline } from '../lib/useOnline.ts';
 import { preload, preloadWhenIdle, type PageName } from '../lib/pages.ts';
-import BrandMark from './BrandMark.tsx';
 import InstallButton from './InstallButton.tsx';
 import SearchPanel from './SearchPanel.tsx';
 import { SearchIcon } from './Icons.tsx';
@@ -53,7 +52,6 @@ export default function Layout() {
       <header className="site-head">
         <div className="navbar">
           <Link to="/" className="brand" aria-label="Forever Meta, на главную" viewTransition>
-            <BrandMark className="brand__mark" />
             <span className="brand__name">Forever Meta</span>
           </Link>
           <nav className="navbar__links" aria-label="Разделы">

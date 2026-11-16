@@ -1,6 +1,8 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import { fileURLToPath } from 'node:url';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // Сайт живёт на GitHub Pages по адресу https://medivhkr.github.io/forever-meta/,
@@ -9,8 +11,10 @@ const BASE = '/forever-meta/';
 
 export default defineConfig({
   base: BASE,
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   plugins: [
     react(),
+    tailwindcss(),
     // PWA: сайт можно установить на телефон как приложение, и он открывается без интернета
     VitePWA({
       registerType: 'autoUpdate',

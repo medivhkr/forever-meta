@@ -1,4 +1,5 @@
-import { useId, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useLayoutEffect, useState, type ReactNode, type RefObject } from 'react';
+import { Tabs } from '@/components/ui/tabs';
 
 interface Option<T extends string> {
   value: T;
@@ -8,17 +9,15 @@ interface Option<T extends string> {
 }
 
 interface Props<T extends string> {
-  label: string; // для скринридера: на экране подписи нет, варианты говорят сами за себя
+  label: string;
   value: T;
   options: Option<T>[];
   onChange: (value: T) => void;
-  variant?: 'buttons' | 'tabs'; // кнопки в рамке или вкладки с подчёркиванием
+  variant?: 'buttons' | 'tabs';
 }
 
 type Thumb = { x: number; w: number };
 
-// Подсветка выбранного варианта переезжает к нему, а не перепрыгивает. Меряем выбранный элемент
-// до отрисовки кадра (useLayoutEffect) и двигаем подсветку; CSS анимирует перемещение.
 export function useThumb(group: RefObject<HTMLElement | null>, selector: string, selected: unknown): Thumb | null {
   const [thumb, setThumb] = useState<Thumb | null>(null);
 
@@ -34,7 +33,6 @@ export function useThumb(group: RefObject<HTMLElement | null>, selector: string,
       });
     };
     measure();
-    // Ширина вариантов меняется, когда догружается шрифт или поворачивают телефон
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(measure);
     observer.observe(el);
@@ -49,27 +47,16 @@ export function ThumbView({ thumb }: { thumb: Thumb | null }) {
   return <span className="seg__thumb" aria-hidden="true" style={{ width: thumb.w, transform: `translateX(${thumb.x}px)` }} />;
 }
 
-// Переключатель из нескольких кнопок. Дженерик T, чтобы onChange получал точный тип значения.
-export default function Segmented<T extends string>({ label, value, options, onChange, variant = 'buttons' }: Props<T>) {
-  const id = useId();
-  const group = useRef<HTMLDivElement>(null);
-  const thumb = useThumb(group, '[aria-pressed="true"]', value);
-  const base = variant === 'tabs' ? 'tabs' : 'seg';
-
+export default function Segmented<T extends string>({ label, value, options, onChange }: Props<T>) {
   return (
-    <div className={`${base}-wrap`}>
-      <span className="sr-only" id={id}>
-        {label}
-      </span>
-      <div ref={group} className={thumb ? `${base} has-thumb` : base} role="group" aria-labelledby={id}>
-        <ThumbView thumb={thumb} />
-        {options.map((o) => (
-          <button key={o.value} type="button" aria-pressed={o.value === value} title={o.hint} onClick={() => onChange(o.value)}>
-            {o.icon}
-            {o.label}
-          </button>
-        ))}
-      </div>
+    <div className="switch-row">
+      <Tabs
+        label={label}
+        size="lg"
+        value={value}
+        options={options.map((o) => ({ value: o.value, label: o.label, icon: o.icon }))}
+        onValueChange={(v) => onChange(v as T)}
+      />
     </div>
   );
 }

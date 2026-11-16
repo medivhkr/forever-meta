@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createBrowserRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { routes } from './routes.tsx';
+import './index.css';
 import './styles.css';
 
 // Данные меняются раз в несколько часов, поэтому держим их в кеше 5 минут и не перезапрашиваем при фокусе окна.

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 import { useMeta, useZone, useItems } from '../data/api.ts';
 import { ROLE_ICON } from '../data/art.ts';
@@ -11,7 +11,8 @@ import BackLink from '../components/BackLink.tsx';
 import GameIcon from '../components/GameIcon.tsx';
 import ItemLink from '../components/ItemLink.tsx';
 import PageHero from '../components/PageHero.tsx';
-import Segmented, { ThumbView, useThumb } from '../components/Segmented.tsx';
+import Segmented from '../components/Segmented.tsx';
+import { Tabs } from '@/components/ui/tabs';
 import SpecBars from '../components/SpecBars.tsx';
 import PlayersTable from '../components/PlayersTable.tsx';
 import { EmptyState, ErrorState, Loading } from '../components/States.tsx';
@@ -28,8 +29,6 @@ export default function BossPage() {
   const { zoneId, encounterId } = useParams();
   const { role, stat, update } = useViewParams();
   const [tab, setTab] = useState<Tab>('specs');
-  const tabsRef = useRef<HTMLDivElement>(null);
-  const thumb = useThumb(tabsRef, '[aria-selected="true"]', tab);
   const meta = useMeta();
   const items = useItems();
   const zone = meta.data?.zones.find((z) => String(z.id) === zoneId);
@@ -148,24 +147,14 @@ export default function BossPage() {
         }
       />
 
-      <div className="tabs-wrap">
-        <div ref={tabsRef} className={thumb ? 'tabs has-thumb' : 'tabs'} role="tablist" aria-label="Вид">
-          <ThumbView thumb={thumb} />
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              id={`tab-${t.id}`}
-              aria-selected={tab === t.id}
-              aria-controls="boss-panel"
-              onClick={() => setTab(t.id)}
-            >
-              {t.label}
-              {t.id === 'loot' && loot.length > 0 && <span className="tabs__count">{loot.length}</span>}
-            </button>
-          ))}
-        </div>
+      <div className="controls">
+        <Tabs
+          label="Вид"
+          size="lg"
+          value={tab}
+          options={TABS.map((t) => ({ value: t.id, label: t.id === 'loot' && loot.length > 0 ? `${t.label} ${loot.length}` : t.label }))}
+          onValueChange={(v) => setTab(v as Tab)}
+        />
       </div>
 
       {tab !== 'loot' && (
@@ -191,7 +180,7 @@ export default function BossPage() {
         </div>
       )}
 
-      <section id="boss-panel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="panel">
+      <section id="boss-panel" className="panel">
         <div className="panel__head">
           <div>
             <h2 className="panel__title">{head.title}</h2>
